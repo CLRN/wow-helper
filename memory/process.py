@@ -1,4 +1,4 @@
-from memory import Memory
+from memory.memory import Memory
 import logging
 
 mem = Memory()
@@ -21,6 +21,9 @@ class Process:
             raise Exception("No base address found")
 
         logging.info(f"Base for {name} is {self.base_address}")
+
+        global current
+        current = self
 
     def int(self, address):
         return mem.read_integer(self.handle, address)

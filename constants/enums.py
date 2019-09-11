@@ -1,7 +1,4 @@
-import enum
-
-
-class ObjectType(enum):
+class ObjectType:
     Unit = 5
     Player = 6
     CurrentPlayer = 7
