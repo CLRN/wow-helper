@@ -6,6 +6,7 @@ class Offsets:
     IsLoadingOrConnecting = 0x21fe770
     CurrentGroundTargetSpell = 0x226ac00
     CTMActionTypeTrigger = 0x1c8e8a8
+    TargetGuid = 0x216C8C0
 
     Date = 0x1bd75e8
     Version = 0x1bd75d4
@@ -32,7 +33,3 @@ class Location:
     Z = 8
     R = 16
 
-
-class Descritor:
-    HP = 55
-    Mana = 57
