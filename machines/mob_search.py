@@ -31,8 +31,7 @@ class MobSearch(StateMachine):
                 self.select()
             else:
                 logging.debug("Picking next target")
-                self.controller.press('tab')
-                time.sleep(random.randint(30, 80) / 100)
+                self.controller.tab()
 
     def on_enter_moving_to(self):
         logging.debug("Starting moving closer")

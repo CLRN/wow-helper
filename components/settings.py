@@ -1,0 +1,10 @@
+class Settings:
+    REGEN_HP_THRESHOLD = 80
+    REGEN_POWER_THRESHOLD = 40
+
+    LOOTING_RANGE = 5
+
+    HIGHER_LEVEL_MOB_THRESHOLD = 2
+    LOWER_LEVEL_MOB_THRESHOLD = 4
+
+    TRANSITION_TIME_LOOTING = 2  # time to let mob body become lootable

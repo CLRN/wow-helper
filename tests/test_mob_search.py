@@ -21,11 +21,12 @@ def test_search_simple():
 
     machine.process(19, False)
     assert machine.in_range
-    calls['press'].append(call('tab'))
 
     machine.process(19, True)
     assert machine.is_selected
 
     for method, args in calls.items():
         getattr(controller, method).assert_has_calls(args)
+
+    controller.tab.assert_called_once()
 

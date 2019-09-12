@@ -1,7 +1,6 @@
 from statemachine import StateMachine, State
+from components.settings import Settings
 import logging
-
-LOOTING_RANGE = 2
 
 
 class MobLooting(StateMachine):
@@ -10,7 +9,7 @@ class MobLooting(StateMachine):
     in_range = State('Mob in range to select', initial=True)
     looted = State('Looted target')
 
-    move_closer = out_of_range.to(moving_to) | in_range.to(moving_to)
+    move_closer = out_of_range.to(moving_to) | in_range.to(moving_to) | looted.to(moving_to)
     stop = moving_to.to(in_range)
     loot = in_range.to(looted)
 
@@ -19,9 +18,9 @@ class MobLooting(StateMachine):
         StateMachine.__init__(self)
 
     def process(self, target_range):
-        if target_range > LOOTING_RANGE and not self.is_moving_to:
+        if target_range > Settings.LOOTING_RANGE and not self.is_moving_to:
             self.move_closer()
-        elif target_range < LOOTING_RANGE and self.is_moving_to:
+        elif target_range < Settings.LOOTING_RANGE and self.is_moving_to:
             self.stop()
         elif self.is_in_range:
             logging.debug("Looting target")

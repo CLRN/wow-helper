@@ -1,5 +1,5 @@
 from machines.rotation import Rotation
-
+import math
 from unittest.mock import Mock, call
 
 
@@ -7,7 +7,7 @@ def test_init_facing():
     controller = Mock()
 
     machine = Rotation(controller)
-    machine.process(10)
+    machine.process(math.radians(10))
 
     assert machine.is_facing
 
@@ -18,7 +18,7 @@ def test_init_not_facing_left():
     controller = Mock()
 
     machine = Rotation(controller)
-    machine.process(60)
+    machine.process(math.radians(60))
 
     assert machine.is_left
 
@@ -29,7 +29,7 @@ def test_init_not_facing_right():
     controller = Mock()
 
     machine = Rotation(controller)
-    machine.process(-60)
+    machine.process(math.radians(-60))
 
     assert machine.is_right
 
@@ -40,22 +40,22 @@ def test_full_rotation():
     controller = Mock()
 
     machine = Rotation(controller)
-    machine.process(100)
+    machine.process(math.radians(100))
 
     # turn left
     assert not machine.is_facing
-    machine.process(70)
-    machine.process(40)
-    machine.process(20)
+    machine.process(math.radians(70))
+    machine.process(math.radians(40))
+    machine.process(math.radians(20))
 
     controller.down.assert_called_once_with('a')
     controller.up.assert_called_once_with('a')
 
     # turn right
-    machine.process(-90)
+    machine.process(math.radians(-90))
 
     assert not machine.is_facing
-    machine.process(-10)
+    machine.process(math.radians(-10))
 
     calls = [call('a'), call('d')]
     controller.down.assert_has_calls(calls)
@@ -66,7 +66,7 @@ def test_init_kiting():
     controller = Mock()
 
     machine = Rotation(controller, kiting=True)
-    machine.process(10)
+    machine.process(math.radians(10))
 
     assert machine.is_left
 

@@ -20,13 +20,14 @@ class Rotation(StateMachine):
         self.is_kiting = kiting
         StateMachine.__init__(self)
 
-    def process(self, angle):
-        value = 180 - math.fabs(angle) if self.is_kiting else math.fabs(angle)
+    def process(self, angle_radians):
+        degrees = 180 - math.degrees(angle_radians) if self.is_kiting else math.degrees(angle_radians)
 
-        if (self.is_left or self.is_right) and value < ANGLE_RANGE:
+        if (self.is_left or self.is_right) and math.fabs(degrees) < ANGLE_RANGE:
             self.stop_turning()
-        elif self.is_facing and value > ANGLE_RANGE:
-            if angle > 0:
+        elif self.is_facing and math.fabs(degrees) > ANGLE_RANGE:
+            logging.info(f"Rotating to {angle_radians}")
+            if angle_radians > 0:
                 self.turn_left()
             else:
                 self.turn_right()

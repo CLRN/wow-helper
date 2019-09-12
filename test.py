@@ -1,13 +1,13 @@
 from memory.process import Process
 from memory.object_manager import ObjectManager
-from algos.relativity import Relativity
 from control.keyboard_controller import KeyboardController
 from machines.rotation import Rotation
-from machines.combat_action import CombatAction
-from machines.mob_search import MobSearch
-from machines.looting import MobLooting
-from components.spell import Spell
+from algos.relativity import Relativity
+
+from machines.mob_farmer import MobFarmer
+
 from components.mob_picker import MobPicker
+from combat.priest import Model as PriestModel
 
 import logging
 import time
@@ -48,72 +48,27 @@ if __name__ == '__main__':
     manager = ObjectManager(process)
 
     manager.update()
-    player = manager.player()
-
-    # while True:
-    #     manager.update()
-    #     target = manager.target()
-    #     if not target:
-    #         time.sleep(0.5)
-    #         continue
-    #
-    #     logging.info(f"{target.loot()}")
-    #     time.sleep(0.5)
-    #
-    # make_dump(manager.target(), 1000, 4, 'int')
 
     controller = KeyboardController()
+    model = PriestModel()
+    picker = MobPicker(manager)
+
+    farmer = MobFarmer(controller=controller,
+                       object_manager=manager,
+                       combat_model=model,
+                       mob_picker=picker)
+
     rotation = Rotation(controller)
-    action = CombatAction(controller)
-    search = MobSearch(controller)
-    looting = MobLooting(controller)
-
-    smite_spell = Spell(2, 25, 2, '2', 0)
-
-    while True:
-        manager.update()
-        mob = MobPicker(manager).pick_lootable()
-
-        if not mob:
-            break
-
-        rotation.process(math.degrees(Relativity.angle(player, mob)))
-        looting.process(Relativity.distance(player, mob))
+    # while True:
+    #     manager.update()
+    #     if manager.target():
+    #         angle = Relativity.angle(manager.player(), manager.target())
+    #         # time.sleep(0.5)
+    #         rotation.process(angle)
 
     while True:
         manager.update()
-        rotation.process(math.degrees(Relativity.angle(player, mob)))
-
-        target = manager.target()
-        if target:
-            logging.info(f"Mob: {mob}, Target {manager.target()}")
-
-        search.process(Relativity.distance(player, mob), target.id() == mob.id() if target else False)
-        if search.is_selected:
-            break
-
-    while True:
-        manager.update()
-        t = manager.target()
-        if t:
-            rotation.process(math.degrees(Relativity.angle(player, t)))
-            action.process(Relativity.distance(player, t), smite_spell, player.spell())
-        else:
-            logging.info('No target')
-            time.sleep(1)
-
-    while True:
-        logging.info(manager.objects())
-        logging.info(manager.player())
-
-        target = manager.target()
-        if target:
-            logging.info(target)
-            tot = target.target()
-            if tot:
-                logging.info(manager.object(tot))
-
-        time.sleep(1)
+        farmer.process()
 
 
 

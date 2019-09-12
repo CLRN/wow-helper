@@ -1,9 +1,8 @@
 from constants.enums import ObjectType
 from algos.relativity import Relativity
+from components.settings import Settings
 
 import math
-
-MAX_LEVEL_DIFF = 2
 
 
 class MobPicker:
@@ -14,7 +13,9 @@ class MobPicker:
     def _filter_alive(self, mob):
         if mob.target():
             return False
-        if mob.npc_flags() or mob.type() != ObjectType.Unit or math.fabs(mob.level() - self.level) > MAX_LEVEL_DIFF:
+        if mob.npc_flags() or mob.type() != ObjectType.Unit or \
+                mob.level() - self.level > Settings.HIGHER_LEVEL_MOB_THRESHOLD or \
+                self.level - mob.level() > Settings.LOWER_LEVEL_MOB_THRESHOLD:
             return False
         return mob.hp() != 0
 
@@ -38,3 +39,15 @@ class MobPicker:
 
     def pick_lootable(self):
         return self._pick(self._filter_lootable)
+
+    def fighting(self):
+        player_id = self.manager.player().id()
+
+        # filter out units keeping mobs only
+        result = list()
+        mobs = filter(self._filter_alive, self.manager.objects())
+        for m in mobs:
+            if m.target() == player_id:
+                result.append(m)
+
+        return result
