@@ -2,9 +2,11 @@ from memory.process import Process
 from memory.object_manager import ObjectManager
 from algos.relativity import Relativity
 from control.autogui_controller import Controller
+from control.keyboard_controller import KeyboardController
 from machines.rotation import Rotation
 from machines.combat_action import CombatAction
 from machines.mob_search import MobSearch
+from machines.looting import MobLooting
 from components.spell import Spell
 from components.mob_picker import MobPicker
 
@@ -13,7 +15,7 @@ import time
 import math
 
 
-def make_dump(player):
+def make_dump(player, count=10000, offset=4, func='int', desc=True):
     logging.info("waiting")
 
     for i in range(0, 5):
@@ -22,19 +24,24 @@ def make_dump(player):
 
     logging.info("snapshot")
 
+    if desc:
+        start_offset = player.descriptors
+    else:
+        start_offset = player.offset
+
     values = list()
     for i in range(0, count):
-        values.append(process.int(player.offset + i * 4))
+        values.append(getattr(process, func)(start_offset + i * offset))
 
     time.sleep(5)
     logging.info("comparing")
 
     values2 = list()
     for i in range(0, count):
-        values2.append(process.int(player.offset + i * 4))
+        values2.append(getattr(process, func)(start_offset + i * offset))
 
     for i in range(0, count):
-        if values[i] and not values2[i]:
+        if values[i] != values2[i]:
             logging.info(f"diff for {i}: {values[i]}")
 
 
@@ -44,23 +51,38 @@ if __name__ == '__main__':
     process = Process("Wow.exe")
     manager = ObjectManager(process)
 
-    count = 2000
-
     manager.update()
     player = manager.player()
 
-    # make_dump(player)
+    # while True:
+    #     manager.update()
+    #     target = manager.target()
+    #     if not target:
+    #         time.sleep(0.5)
+    #         continue
+    #
+    #     logging.info(f"{target.loot()}")
+    #     time.sleep(0.5)
+    #
+    # make_dump(manager.target(), 1000, 4, 'int')
 
-    controller = Controller()
+    controller = KeyboardController()
     rotation = Rotation(controller)
     action = CombatAction(controller)
     search = MobSearch(controller)
+    looting = MobLooting(controller)
 
     smite_spell = Spell(2, 25, 2, '2', 0)
 
-    mob = MobPicker(manager).pick()
+    while True:
+        manager.update()
+        mob = MobPicker(manager).pick_lootable()
 
-    logging.info(f"Going to {mob}")
+        if not mob:
+            break
+
+        rotation.process(math.degrees(Relativity.angle(player, mob)))
+        looting.process(Relativity.distance(player, mob))
 
     while True:
         manager.update()

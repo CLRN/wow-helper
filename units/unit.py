@@ -1,5 +1,5 @@
 from units.object import Object
-from constants.desriptors import CGUnitData
+from constants.descriptors import CGUnitData, CGObjectData
 
 
 class Unit(Object):
@@ -17,3 +17,6 @@ class Unit(Object):
 
     def npc_flags(self):
         return self.process.int(self.descriptors + CGUnitData.npcFlags * 4)
+
+    def loot(self):
+        return self.process.byte(self.descriptors + CGObjectData.m_entryID * 4) == 4
