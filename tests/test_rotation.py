@@ -36,7 +36,7 @@ def test_init_not_facing_right():
     controller.down.assert_called_once_with('d')
 
 
-def test_full():
+def test_full_rotation():
     controller = Mock()
 
     machine = Rotation(controller)

@@ -1,7 +1,6 @@
 from memory.process import Process
 from memory.object_manager import ObjectManager
 from algos.relativity import Relativity
-from control.autogui_controller import Controller
 from control.keyboard_controller import KeyboardController
 from machines.rotation import Rotation
 from machines.combat_action import CombatAction
@@ -24,10 +23,7 @@ def make_dump(player, count=10000, offset=4, func='int', desc=True):
 
     logging.info("snapshot")
 
-    if desc:
-        start_offset = player.descriptors
-    else:
-        start_offset = player.offset
+    start_offset = player.descriptors if desc else player.offset
 
     values = list()
     for i in range(0, count):
