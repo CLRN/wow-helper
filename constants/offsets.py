@@ -21,6 +21,12 @@ class Offsets:
     GameObjectPosition = 0x1B0
     UnitPosition = 0x1600
 
+    CurrentSpellId = 0x1968
+    IsAttacking = 0x18A4
+
+    FirstAuraOffset = 0x1B58
+    NextAuraOffset = 0xA8
+
     CameraOffset = 0x3330
     CameraOrigin = 0x10
     CameraMatrix = 0x1C
