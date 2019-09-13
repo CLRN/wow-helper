@@ -4,25 +4,25 @@ from constants.descriptors import CGUnitData, CGObjectData
 
 class Unit(Object):
     def hp(self):
-        return self.process.int(self.descriptors + CGUnitData.health * 4)
+        return self.process.int(self.descriptors + CGUnitData.Health * 4)
 
     def power(self):
-        return self.process.int(self.descriptors + CGUnitData.power * 4)
+        return self.process.int(self.descriptors + CGUnitData.Power * 4)
 
     def max_hp(self):
-        return self.process.int(self.descriptors + CGUnitData.maxHealth * 4)
+        return self.process.int(self.descriptors + CGUnitData.MaxHealth * 4)
 
     def max_power(self):
-        return self.process.int(self.descriptors + CGUnitData.maxPower * 4)
+        return self.process.int(self.descriptors + CGUnitData.MaxPower * 4)
 
     def level(self):
-        return self.process.int(self.descriptors + CGUnitData.level * 4)
+        return self.process.int(self.descriptors + CGUnitData.Level * 4)
 
     def target(self):
-        return self.process.ptr(self.descriptors + CGUnitData.target * 4)
+        return self.process.ptr(self.descriptors + CGUnitData.Target * 4)
 
     def npc_flags(self):
-        return self.process.int(self.descriptors + CGUnitData.npcFlags * 4)
+        return self.process.int(self.descriptors + CGUnitData.NpcFlags * 4)
 
     def loot(self):
-        return self.process.byte(self.descriptors + CGObjectData.m_entryID * 4) == 4
+        return self.process.byte(self.descriptors + CGObjectData.EntryID * 4) == 4

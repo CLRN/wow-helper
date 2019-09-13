@@ -1,4 +1,5 @@
 from constants.offsets import Offsets
+from constants.manual_offsets import Global, ObjectOffsets
 from constants.enums import ObjectType
 from units.object import Object
 from units.item import Item
@@ -12,11 +13,11 @@ class ObjectManager:
     def __init__(self, process):
         self.process = process
 
-        logging.info(f"Wow: {process.str(process.base_address + Offsets.Version, 10)}."
-                     f"{process.str(process.base_address + Offsets.Build, 10)}, "
-                     f"date: {process.str(process.base_address + Offsets.Date, 20)}")
+        logging.info(f"Wow: {process.str(process.base_address + Offsets.GameVersion, 10)}."
+                     f"{process.str(process.base_address + Offsets.GameBuild, 10)}, "
+                     f"date: {process.str(process.base_address + Offsets.GameReleaseDate, 20)}")
 
-        self._obj_manager = process.ptr(process.base_address + Offsets.ObjMgrPtr)
+        self._obj_manager = process.ptr(process.base_address + Offsets.ObjectMgrPtr)
         self._object_types = {
             ObjectType.Unit: Unit,
             ObjectType.Player: Player,
@@ -30,11 +31,11 @@ class ObjectManager:
         logging.info(f"Player GUID: {self._player_id}")
 
     def _offsets(self):
-        current = self.process.ptr(self._obj_manager + Offsets.FirstObj)
+        current = self.process.ptr(self._obj_manager + Global.FirstObj)
 
         while current:
             try:
-                next_obj = self.process.ptr(current + Offsets.NextObj)
+                next_obj = self.process.ptr(current + Global.NextObj)
                 yield current
                 current = next_obj
             except:
@@ -44,7 +45,7 @@ class ObjectManager:
         self._objects = dict()
 
         for offset in self._offsets():
-            obj_type = self.process.byte(offset + Offsets.ObjType)
+            obj_type = self.process.byte(offset + ObjectOffsets.ObjType)
             if obj_type not in self._object_types:
                 continue
 
@@ -61,5 +62,5 @@ class ObjectManager:
         return self._objects[self._player_id]
 
     def target(self):
-        target_guid = self.process.ptr(self.process.base_address + Offsets.TargetGuid)
+        target_guid = self.player().target()
         return self._objects[target_guid] if target_guid in self._objects else None

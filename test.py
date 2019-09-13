@@ -3,11 +3,14 @@ from memory.object_manager import ObjectManager
 from control.keyboard_controller import KeyboardController
 from machines.rotation import Rotation
 from algos.relativity import Relativity
+from constants.offsets import Offsets
 
 from machines.mob_farmer import MobFarmer
 
 from components.mob_picker import MobPicker
 from combat.priest import Model as PriestModel
+
+from memory.camera import get_matrix
 
 import logging
 import time
@@ -48,6 +51,22 @@ if __name__ == '__main__':
     manager = ObjectManager(process)
 
     manager.update()
+
+    while True:
+        time.sleep(0.3)
+
+    struct = process.ptr(process.base_address + Offsets.CameraBase)
+    offset = process.ptr(struct + Offsets.CameraOffset)
+    # matrix = process.ptr(offset + Offsets.CameraMatrix)
+
+    while True:
+        values = list()
+        for i in range(0, 9):
+            values.append(process.float(offset + Offsets.CameraMatrix + i * 4))
+
+        logging.info(values)
+        logging.info(get_matrix())
+        time.sleep(1)
 
     controller = KeyboardController()
     model = PriestModel()

@@ -30,7 +30,7 @@ class MobSearch(StateMachine):
             if target_selected:
                 self.select()
             else:
-                logging.debug("Picking next target")
+                logging.debug(f"Picking next target, range: {target_range}")
                 self.controller.tab()
 
     def on_enter_moving_to(self):

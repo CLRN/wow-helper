@@ -1,29 +1,29 @@
-from constants.offsets import Offsets, Location
+from constants.manual_offsets import Location, ObjectOffsets
 
 
 class Object:
     def __init__(self, process, offset):
         self.process = process
         self.offset = offset
-        self.descriptors = self.process.ptr(offset + Offsets.Descriptors) + 4
+        self.descriptors = self.process.ptr(offset + ObjectOffsets.Descriptors)
 
     def id(self):
-        return self.process.ptr(self.offset + Offsets.ObjGUID)
+        return self.process.ptr(self.offset + ObjectOffsets.ObjGUID)
 
     def type(self):
-        return self.process.byte(self.offset + Offsets.ObjType)
+        return self.process.byte(self.offset + ObjectOffsets.ObjType)
 
     def x(self):
-        return self.process.float(self.offset + Offsets.UnitPosition + Location.X)
+        return self.process.float(self.offset + ObjectOffsets.UnitPosition + Location.X)
 
     def y(self):
-        return self.process.float(self.offset + Offsets.UnitPosition + Location.Y)
+        return self.process.float(self.offset + ObjectOffsets.UnitPosition + Location.Y)
 
     def z(self):
-        return self.process.float(self.offset + Offsets.UnitPosition + Location.Z)
+        return self.process.float(self.offset + ObjectOffsets.UnitPosition + Location.Z)
 
     def r(self):
-        return self.process.float(self.offset + Offsets.UnitPosition + Location.R)
+        return self.process.float(self.offset + ObjectOffsets.UnitPosition + Location.R)
 
     def __repr__(self):
         public = [method_name for method_name in dir(self) if not method_name.startswith("__")]
