@@ -2,3 +2,5 @@ pypiwin32
 python-statemachine
 pytest
 pyautogui
+pywin32
+

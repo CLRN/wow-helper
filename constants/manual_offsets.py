@@ -3,6 +3,13 @@ class Global:
     NextObj = 0x40
 
 
+class Camera:
+    CameraOffset = 0x3330
+    CameraOrigin = 0x10
+    CameraMatrix = 0x1C
+    CameraFoV = 0x40
+
+
 class Location:
     X = 0
     Y = 4
