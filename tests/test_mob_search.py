@@ -11,22 +11,22 @@ def test_search_simple():
     machine = MobSearch(controller)
     assert machine.is_in_range
 
-    machine.process(40, False)
+    machine.process(40, False, (100, 200))
     assert machine.is_moving_to
     calls['down'].append(call('w'))
 
-    machine.process(18, False)
+    machine.process(18, False, (100, 100))
     assert machine.is_in_range
     calls['up'].append(call('w'))
 
-    machine.process(19, False)
+    machine.process(19, False, (100, 100))
     assert machine.in_range
 
-    machine.process(19, True)
+    machine.process(19, True, (100, 100))
     assert machine.is_selected
 
     for method, args in calls.items():
         getattr(controller, method).assert_has_calls(args)
 
-    controller.tab.assert_called_once()
+    controller.click.assert_called_with(100, 100)
 

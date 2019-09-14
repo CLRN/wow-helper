@@ -1,11 +1,10 @@
 from memory.process import Process
 from memory.object_manager import ObjectManager
-from control.keyboard_controller import KeyboardController
+from control.autogui_controller import Controller
 from machines.rotation import Rotation
 from algos.relativity import Relativity
 from constants.offsets import Offsets
 from constants.manual_offsets import Global, Camera
-from control.mouse import Mouse
 
 from machines.mob_farmer import MobFarmer
 
@@ -53,35 +52,19 @@ if __name__ == '__main__':
     process = Process("Wow.exe")
     manager = ObjectManager(process)
     window = Window()
-    mouse = Mouse()
 
-    while True:
-        manager.update()
+    # for o in manager.objects():
+    #     logging.info(o)
 
-        target = manager.target()
-        if target:
-            x, y = world_to_screen(process, window, target.x(), target.y(), target.z())
-            logging.info((x, y))
-            mouse.hover(x, y)
-
-        time.sleep(0.3)
-
-    controller = KeyboardController()
+    controller = Controller()
     model = PriestModel()
     picker = MobPicker(manager)
 
-    farmer = MobFarmer(controller=controller,
+    farmer = MobFarmer(window=window,
+                       controller=controller,
                        object_manager=manager,
                        combat_model=model,
                        mob_picker=picker)
-
-    rotation = Rotation(controller)
-    # while True:
-    #     manager.update()
-    #     if manager.target():
-    #         angle = Relativity.angle(manager.player(), manager.target())
-    #         # time.sleep(0.5)
-    #         rotation.process(angle)
 
     while True:
         manager.update()

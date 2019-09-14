@@ -24,6 +24,7 @@ class CombatAction(StateMachine):
         StateMachine.__init__(self)
 
     def process(self, target_range, next_spell, is_casting):
+        previous_spell = self.spell
         self.spell = next_spell
 
         if is_casting:
@@ -43,7 +44,8 @@ class CombatAction(StateMachine):
             if self.is_moving_to or self.is_moving_away:
                 self.stop()
             elif not self.is_casting:
-                logging.debug(f"Casting spell {self.spell.bind_key}")
+                if previous_spell and previous_spell.bind_key != self.spell.bind_key:
+                    logging.debug(f"Casting spell {self.spell.bind_key}")
                 self.controller.press(self.spell.bind_key)
                 if self.spell.cast_time:
                     self.cast()

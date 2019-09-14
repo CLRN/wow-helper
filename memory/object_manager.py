@@ -30,6 +30,8 @@ class ObjectManager:
 
         logging.info(f"Player GUID: {self._player_id}")
 
+        self.update()
+
     def _offsets(self):
         current = self.process.ptr(self._obj_manager + Global.FirstObj)
 

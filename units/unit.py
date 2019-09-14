@@ -25,4 +25,4 @@ class Unit(Object):
         return self.process.int(self.descriptors + CGUnitData.NpcFlags * 4)
 
     def loot(self):
-        return self.process.byte(self.descriptors + CGObjectData.EntryID * 4) == 4
+        return self.process.byte(self.descriptors + CGObjectData.DynamicFlags * 4) == 4

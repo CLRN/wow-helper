@@ -5,6 +5,7 @@ from machines.rotation import Rotation
 from machines.looting import MobLooting
 from machines.mob_search import MobSearch
 from machines.combat_action import CombatAction
+from memory.camera import world_to_screen
 
 import logging
 import time
@@ -15,15 +16,18 @@ class MobFarmer(StateMachine):
     fighting = State('Fighting with mob')
     looting = State('Looting mobs', initial=True)
     restoring = State('Restoring HP/Power')
+    eating = State('Eating/drinking to restore HP/Power')
 
     found = searching.to(fighting)
     lost = fighting.to(searching)
     killed = fighting.to(looting)
     looted = looting.to(restoring)
-    restored = restoring.to(searching)
+    eat = restoring.to(eating)
+    restored = eating.to(searching) | restoring.to(searching)
     fight = searching.to(fighting) | restoring.to(fighting) | looting.to(fighting)
 
-    def __init__(self, controller, object_manager, combat_model, mob_picker):
+    def __init__(self, window, controller, object_manager, combat_model, mob_picker):
+        self.window = window
         self.controller = controller
         self.object_manager = object_manager
         self.combat_model = combat_model
@@ -43,6 +47,9 @@ class MobFarmer(StateMachine):
         angle = Relativity.angle(self.object_manager.player(), unit)
         self.rotation.process(angle)
 
+    def _get_coords(self, unit):
+        return world_to_screen(self.object_manager.process, self.window, unit.x(), unit.y(), unit.z())
+
     def _do_searching(self):
         mob = self.mob_picker.pick_alive()
         if not mob:
@@ -53,7 +60,7 @@ class MobFarmer(StateMachine):
         target = self.object_manager.target()
 
         self._rotate(mob)
-        self.search.process(distance, target.id() == mob.id() if target else False)
+        self.search.process(distance, target.id() == mob.id() if target else False, self._get_coords(mob))
         if self.search.is_selected:
             self.found()
 
@@ -69,7 +76,7 @@ class MobFarmer(StateMachine):
 
             player = self.object_manager.player()
             self.combat.process(Relativity.distance(player, target),
-                                self.combat_model.get_next_spell(),
+                                self.combat_model.get_next_attacking_spell(),
                                 player.spell())
 
     def _do_restoring(self):
@@ -82,16 +89,27 @@ class MobFarmer(StateMachine):
                 self.combat_model.can_heal():
             self.combat_model.heal_self()
         else:
-            # TODO: do some power restoration
-            pass
+            spell = self.combat_model.get_next_power_regen_spell()
+            if spell:
+                self.controller.press('x')
+                self.controller.press(spell.bind_key)
+                self.eat()
+
+    def _do_eating(self):
+        player = self.object_manager.player()
+        if player.hp() == player.max_hp() and player.power() == player.max_power():
+            self.restored()
 
     def _do_looting(self):
+        if time.time() - self.transition_time < Settings.LOOT_ACTION_DELAY_SECONDS:
+            return
+
         mob = self.mob_picker.pick_lootable()
-        if not mob and time.time() - self.transition_time > Settings.TRANSITION_TIME_LOOTING:
+        if not mob:
             self.looted()
         elif mob:
             self._rotate(mob)
-            self.looting.process(Relativity.distance(self.object_manager.player(), mob))
+            self.looting.process(Relativity.distance(self.object_manager.player(), mob), self._get_coords(mob))
 
     def process(self):
         self.fighting_mobs = self.mob_picker.fighting()
@@ -110,6 +128,10 @@ class MobFarmer(StateMachine):
 
     def on_enter_restoring(self):
         logging.info("Restoring")
+        self.transition_time = time.time()
+
+    def on_enter_eating(self):
+        logging.info("Eating")
         self.transition_time = time.time()
 
     def on_enter_looting(self):

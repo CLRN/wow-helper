@@ -1,6 +1,7 @@
 from statemachine import StateMachine, State
 from components.settings import Settings
 import logging
+import time
 
 
 class MobLooting(StateMachine):
@@ -16,16 +17,17 @@ class MobLooting(StateMachine):
     def __init__(self, controller):
         self.controller = controller
         StateMachine.__init__(self)
+        self.last_looting_time = 0
 
-    def process(self, target_range):
+    def process(self, target_range, target_coords):
         if target_range > Settings.LOOTING_RANGE and not self.is_moving_to:
             self.move_closer()
         elif target_range < Settings.LOOTING_RANGE and self.is_moving_to:
             self.stop()
-        elif self.is_in_range:
-            logging.debug("Looting target")
-            self.controller.loot()
-            self.loot()
+        elif self.is_in_range and target_coords and time.time() - self.last_looting_time > Settings.LOOT_ACTION_REPEAT_SECONDS:
+            logging.debug(f"Looting target. range: {target_range}, coords: {target_coords}")
+            self.controller.click(target_coords[0], target_coords[1])
+            self.last_looting_time = time.time()
 
     def on_enter_moving_to(self):
         logging.debug("Starting moving closer")
