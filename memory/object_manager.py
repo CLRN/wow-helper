@@ -27,8 +27,9 @@ class ObjectManager:
         self._objects = dict()
 
         self._player_id = process.ptr(process.base_address + Offsets.LocalPlayerGUID)
+        self.player_name = process.str(process.base_address + Global.PlayerName, 30)
 
-        logging.info(f"Player GUID: {self._player_id}")
+        logging.info(f"Player GUID: {self._player_id}, name: {self.player_name}")
 
         self.update()
 

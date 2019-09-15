@@ -1,6 +1,7 @@
 class Global:
     FirstObj = 0x18
     NextObj = 0x40
+    PlayerName = 0x2605408
 
 
 class Camera:
