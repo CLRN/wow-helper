@@ -61,13 +61,12 @@ if __name__ == '__main__':
     settings = getattr(module, 'PlayerSettings')()
 
     controller = Controller()
-    model = PriestModel(settings)
     picker = MobPicker(manager)
 
     farmer = MobFarmer(window=window,
                        controller=controller,
                        object_manager=manager,
-                       combat_model=model,
+                       combat_model=settings.model(),
                        mob_picker=picker)
 
     while True:
