@@ -13,6 +13,9 @@ class PlayerSettings:
     def regrowth(self):
         return '5'
 
+    def healing_touch(self):
+        return '3'
+
     def rejuvenation(self):
         return '4'
 
@@ -21,3 +24,6 @@ class PlayerSettings:
 
     def thorns(self):
         return '='
+
+    def drink(self):
+        return None

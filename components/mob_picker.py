@@ -46,7 +46,6 @@ class MobPicker:
             # check proximity for nearby mobs
             mob = ordered[0]
             if self._count_proximity(mob, Settings.MOB_GROUP_PROXIMITY_RANGE) > 2:
-                logging.info(f"Skipping mob {mob} because it has several mobs nearby withing range {Settings.MOB_GROUP_PROXIMITY_RANGE}")
                 ordered.pop(0)
             else:
                 break

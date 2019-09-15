@@ -3,11 +3,11 @@ class Settings:
     ATTACK_ANGLE_RANGE = 30
 
     REGEN_HP_THRESHOLD = 80
-    REGEN_POWER_THRESHOLD = 40
+    REGEN_POWER_THRESHOLD = 60
 
     HEAL_IN_COMBAT_THRESHOLD = 30
 
-    LOOTING_RANGE = 5
+    LOOTING_RANGE = 4
 
     HIGHER_LEVEL_MOB_THRESHOLD = 2
     LOWER_LEVEL_MOB_THRESHOLD = 4
@@ -18,4 +18,6 @@ class Settings:
     LOOT_ACTION_DELAY_SECONDS = 2
     LOOT_ACTION_REPEAT_SECONDS = 3
 
-    MOB_GROUP_PROXIMITY_RANGE = 15  # range between mobs to consider them a group
+    MOB_GROUP_PROXIMITY_RANGE = 20  # range between mobs to consider them a group
+
+    REPORTING_TIME = 10

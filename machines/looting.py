@@ -11,7 +11,7 @@ class MobLooting(StateMachine):
     looted = State('Looted target')
 
     move_closer = out_of_range.to(moving_to) | in_range.to(moving_to) | looted.to(moving_to)
-    stop = moving_to.to(in_range)
+    stop = moving_to.to(in_range) | in_range.to(in_range) | looted.to(in_range)
     loot = in_range.to(looted)
 
     def __init__(self, controller):

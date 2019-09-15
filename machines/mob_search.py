@@ -1,6 +1,8 @@
 from statemachine import StateMachine, State
 from components.settings import Settings
 import logging
+import random
+import time
 
 
 class MobSearch(StateMachine):
@@ -16,6 +18,7 @@ class MobSearch(StateMachine):
     def __init__(self, controller):
         self.controller = controller
         StateMachine.__init__(self)
+        self.last_jump = 0
 
     def process(self, target_range, target_selected, target_coords):
         if target_range > Settings.SEARCH_RANGE and not self.is_moving_to:
@@ -28,6 +31,10 @@ class MobSearch(StateMachine):
             elif target_coords:
                 logging.debug(f"Picking target, range: {target_range}, coords: {target_coords}")
                 self.controller.click(target_coords[0], target_coords[1])
+        else:
+            if time.time() - self.last_jump > random.randint(1, 10):
+                self.controller.press('space')
+                self.last_jump = time.time()
 
     def on_enter_moving_to(self):
         logging.debug("Starting moving closer")

@@ -20,10 +20,10 @@ class MobFarmer(StateMachine):
 
     found = searching.to(fighting)
     lost = fighting.to(searching)
-    killed = fighting.to(looting)
-    looted = looting.to(restoring)
+    killed = fighting.to(restoring)
+    restored = eating.to(looting) | restoring.to(looting)
+    looted = looting.to(searching)
     eat = restoring.to(eating)
-    restored = eating.to(searching) | restoring.to(searching)
     fight = searching.to(fighting) | restoring.to(fighting) | looting.to(fighting)
     loot = searching.to(looting)
 
@@ -41,8 +41,18 @@ class MobFarmer(StateMachine):
 
         self.fighting_mobs = None
         self.transition_time = time.time()
+        self.last_report_time = 0
 
         StateMachine.__init__(self)
+
+    def _report(self):
+        if time.time() - self.last_report_time < Settings.REPORTING_TIME:
+            return
+
+        self.last_report_time = time.time()
+
+        logging.info(f"State: {self.current_state_value}, player: {self.object_manager.player()}")
+        self.controller.screen()
 
     def _rotate(self, unit, angle_range):
         angle = Relativity.angle(self.object_manager.player(), unit)
@@ -121,10 +131,16 @@ class MobFarmer(StateMachine):
         if not mob:
             self.looted()
         elif mob:
-            self._rotate(mob, Settings.SEARCH_ANGLE_RANGE)
-            self.looting.process(Relativity.distance(self.object_manager.player(), mob), self._get_coords(mob))
+            distance = Relativity.distance(self.object_manager.player(), mob)
+            if distance > Settings.LOOTING_RANGE:
+                self._rotate(mob, Settings.SEARCH_ANGLE_RANGE)
+            else:
+                self.rotation.stop_turning()
+
+            self.looting.process(distance, self._get_coords(mob))
 
     def process(self):
+        self._report()
         self.fighting_mobs = self.mob_picker.fighting()
         if len(self.fighting_mobs) and not self.is_fighting:
             self.fight()

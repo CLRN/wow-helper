@@ -7,8 +7,9 @@ import logging
 
 
 class Controller:
-    def __init__(self):
+    def __init__(self, window):
         self.last_action = time.time()
+        self.window = window
 
     def _check_and_update_last_action(self):
         spent = time.time() - self.last_action
@@ -43,3 +44,8 @@ class Controller:
         if self._check_and_update_last_action():
             tween = random.choice([easeInOutElastic, easeInOutCubic, easeInOutExpo])
             pyautogui.rightClick(x, y, tween=tween, duration=random.randint(200, 500) / 1000)
+
+    def screen(self):
+        rect = self.window.rect()
+        screen = pyautogui.screenshot(region=(rect.left_top[0], rect.left_top[1], rect.bottom_right[0], rect.bottom_right[1]))
+        screen.save(f'./screens/{int(time.time())}.png')

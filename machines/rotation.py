@@ -12,7 +12,7 @@ class Rotation(StateMachine):
 
     turn_right = facing.to(right)
     turn_left = facing.to(left)
-    stop_turning = left.to(facing) | right.to(facing)
+    stop_turning = left.to(facing) | right.to(facing) | facing.to(facing)
 
     def __init__(self, controller, kiting=False):
         self.controller = controller
