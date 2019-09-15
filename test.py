@@ -17,6 +17,7 @@ from ui.window import Window
 import logging
 import time
 import math
+import importlib
 
 
 def make_dump(player, count=10000, offset=4, func='int', desc=True):
@@ -56,8 +57,11 @@ if __name__ == '__main__':
     # for o in manager.objects():
     #     logging.info(o)
 
+    module = importlib.import_module(f'players.{manager.player_name.lower()}')
+    settings = getattr(module, 'PlayerSettings')()
+
     controller = Controller()
-    model = PriestModel()
+    model = PriestModel(settings)
     picker = MobPicker(manager)
 
     farmer = MobFarmer(window=window,

@@ -85,9 +85,10 @@ class MobFarmer(StateMachine):
            (player.power() * 100) / player.max_power() > Settings.REGEN_POWER_THRESHOLD:
             self.restored()
         elif (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD and \
-             (player.power() * 100) / player.max_power() > Settings.REGEN_POWER_THRESHOLD and \
-                self.combat_model.can_heal():
-            self.combat_model.heal_self()
+             (player.power() * 100) / player.max_power() > Settings.REGEN_POWER_THRESHOLD:
+            spell = self.combat_model.get_healing_spell()
+            if spell:
+                self.controller.press(spell.bind_key)
         else:
             spell = self.combat_model.get_next_power_regen_spell()
             if spell:
