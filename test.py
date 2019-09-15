@@ -5,6 +5,7 @@ from machines.rotation import Rotation
 from algos.relativity import Relativity
 from constants.offsets import Offsets
 from constants.manual_offsets import Global, Camera
+from constants.descriptors import CGUnitData, CGObjectData
 
 from machines.mob_farmer import MobFarmer
 
@@ -35,7 +36,7 @@ def make_dump(player, count=10000, offset=4, func='int', desc=True):
     for i in range(0, count):
         values.append(getattr(process, func)(start_offset + i * offset))
 
-    time.sleep(5)
+    time.sleep(10)
     logging.info("comparing")
 
     values2 = list()
@@ -44,7 +45,7 @@ def make_dump(player, count=10000, offset=4, func='int', desc=True):
 
     for i in range(0, count):
         if values[i] != values2[i]:
-            logging.info(f"diff for {i}: {values[i]}")
+            logging.info(f"diff for {i}: {values[i]} != {values2[i]}")
 
 
 if __name__ == '__main__':
@@ -59,6 +60,7 @@ if __name__ == '__main__':
 
     module = importlib.import_module(f'players.{manager.player_name.lower()}')
     settings = getattr(module, 'PlayerSettings')()
+    combat_model = settings.model(settings, manager)
 
     controller = Controller()
     picker = MobPicker(manager)
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     farmer = MobFarmer(window=window,
                        controller=controller,
                        object_manager=manager,
-                       combat_model=settings.model(),
+                       combat_model=combat_model,
                        mob_picker=picker)
 
     while True:

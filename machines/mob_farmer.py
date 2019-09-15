@@ -76,7 +76,7 @@ class MobFarmer(StateMachine):
 
             player = self.object_manager.player()
             self.combat.process(Relativity.distance(player, target),
-                                self.combat_model.get_next_attacking_spell(),
+                                self.combat_model.get_next_attacking_spell(self.fighting_mobs),
                                 player.spell())
 
     def _do_restoring(self):

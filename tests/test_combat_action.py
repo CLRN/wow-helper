@@ -3,8 +3,8 @@ from components.spell import Spell
 
 from unittest.mock import Mock, call
 
-attack_spell = Spell(2, 5, 0, '1', 1)
-smite_spell = Spell(2, 25, 2, '2', 0)
+attack_spell = Spell(0, 2, 5, 0, '1', 1)
+smite_spell = Spell(0, 2, 25, 2, '2', 0)
 
 
 def test_smite_simple():

@@ -30,7 +30,14 @@ class Controller:
 
     def press(self, button):
         if self._check_and_update_last_action():
-            pyautogui.press(button, pause=self.random_pause())
+            if isinstance(button, tuple):
+                hot_key, key = button
+
+                pyautogui.keyDown(hot_key, pause=self.random_pause())
+                pyautogui.press(key, pause=self.random_pause())
+                pyautogui.keyUp(hot_key)
+            else:
+                pyautogui.press(button, pause=self.random_pause())
 
     def click(self, x, y):
         if self._check_and_update_last_action():

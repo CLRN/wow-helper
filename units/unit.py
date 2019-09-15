@@ -26,3 +26,6 @@ class Unit(Object):
 
     def loot(self):
         return self.process.byte(self.descriptors + CGObjectData.DynamicFlags * 4) == 4
+
+    def skin(self):
+        return self.process.int(self.descriptors + CGUnitData.Flags * 4) & 0x4000000 != 0
