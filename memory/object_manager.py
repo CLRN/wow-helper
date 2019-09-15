@@ -45,6 +45,7 @@ class ObjectManager:
                 break
 
     def update(self):
+        self.process.invalidate_cache()
         self._objects = dict()
 
         for offset in self._offsets():

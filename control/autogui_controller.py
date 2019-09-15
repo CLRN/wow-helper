@@ -23,10 +23,10 @@ class Controller:
         return random.randint(100, 300) / 1000
 
     def up(self, key):
-        pyautogui.keyUp(key, pause=self.random_pause())
+        pyautogui.keyUp(key)
 
     def down(self, key):
-        pyautogui.keyDown(key, pause=self.random_pause())
+        pyautogui.keyDown(key)
 
     def press(self, button):
         if self._check_and_update_last_action():

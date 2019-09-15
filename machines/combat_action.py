@@ -15,7 +15,7 @@ class CombatAction(StateMachine):
     move_away = in_range.to(moving_away)
     cast = moving_away.to(casting_started) | moving_to.to(casting_started) | in_range.to(casting_started) | \
            casting_started.to(casting_started)
-    cast_detected = casting_started.to(casting) | moving_to.to(casting) | moving_away.to(casting)
+    cast_detected = casting_started.to(casting) | moving_to.to(casting) | moving_away.to(casting) | in_range.to(casting)
     casting_finished = casting.to(in_range)
 
     def __init__(self, controller):

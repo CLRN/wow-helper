@@ -1,9 +1,8 @@
 from statemachine import StateMachine, State
+from components.settings import Settings
 
 import math
 import logging
-
-ANGLE_RANGE = 30
 
 
 class Rotation(StateMachine):
@@ -20,12 +19,12 @@ class Rotation(StateMachine):
         self.is_kiting = kiting
         StateMachine.__init__(self)
 
-    def process(self, angle_radians):
+    def process(self, angle_radians, required_angle=Settings.ATTACK_ANGLE_RANGE):
         degrees = 180 - math.degrees(angle_radians) if self.is_kiting else math.degrees(angle_radians)
 
-        if (self.is_left or self.is_right) and math.fabs(degrees) < ANGLE_RANGE:
+        if (self.is_left or self.is_right) and math.fabs(degrees) < required_angle:
             self.stop_turning()
-        elif self.is_facing and math.fabs(degrees) > ANGLE_RANGE:
+        elif self.is_facing and math.fabs(degrees) > required_angle:
             logging.info(f"Rotating to {angle_radians}")
             if angle_radians > 0:
                 self.turn_left()

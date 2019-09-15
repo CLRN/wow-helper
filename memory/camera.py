@@ -105,13 +105,10 @@ def world_to_screen(process, window, x, y, z):
     Y -= 20
 
     result = window.client_to_screen(int(X), int(Y))
-    if math.fabs(result[0] - rect.bottom_right[0]) < width / 5 and \
-        math.fabs(result[0] - rect.left_top[0]) < width / 5 and \
-        math.fabs(result[1] - rect.bottom_right[1]) < height / 5 and \
-        math.fabs(result[1] - rect.left_top[1]) < height / 5:
-        return None
-
-    if result[0] <= 0 or result[1] <= 0:
+    if result[0] <= rect.left_top[0] or \
+       result[0] >= rect.bottom_right[0] or \
+       result[1] <= rect.left_top[1] or \
+       result[1] >= rect.bottom_right[1]:
         return None
 
     return result

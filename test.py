@@ -55,8 +55,19 @@ if __name__ == '__main__':
     manager = ObjectManager(process)
     window = Window()
 
-    # for o in manager.objects():
-    #     logging.info(o)
+    for o in manager.objects():
+        logging.info(o)
+
+    # while True:
+    #     manager.update()
+    #     target = manager.target()
+    #     for o in manager.objects():
+    #         if o.target():
+    #             logging.info(o)
+    #
+    #         logging.info(target.skin())
+    #         time.sleep(0.3)
+    #         make_dump(target)
 
     module = importlib.import_module(f'players.{manager.player_name.lower()}')
     settings = getattr(module, 'PlayerSettings')()

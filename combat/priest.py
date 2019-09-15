@@ -16,3 +16,6 @@ class Model:
 
     def get_healing_spell(self):
         return Spell(0, 2, 25, 2, self.player_settings.heal(), 0)
+
+    def get_next_buff(self):
+        return None

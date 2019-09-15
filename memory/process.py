@@ -8,6 +8,7 @@ class Process:
     def __init__(self, name):
         self.pid = mem.GetProcessIDByName(name)
         self.handle = mem.GetProcessHandle(name, 1)
+        self.cache = dict()
 
         if not self.pid or not self.handle:
             raise Exception(f"Can't find process by name {name}")
@@ -22,22 +23,45 @@ class Process:
 
         logging.info(f"Base for {name} is {self.base_address}")
 
-        global current
-        current = self
+    def invalidate_cache(self):
+        self.cache = dict()
 
     def int(self, address):
-        return mem.read_integer(self.handle, address)
+        key = 'int', address
+        if key in self.cache:
+            return self.cache[key]
+        res = mem.read_integer(self.handle, address)
+        self.cache[key] = res
+        return res
 
     def float(self, address):
-        return mem.read_float(self.handle, address)
+        key = 'float', address
+        if key in self.cache:
+            return self.cache[key]
+        res = mem.read_float(self.handle, address)
+        self.cache[key] = res
+        return res
 
     def byte(self, address):
-        return mem.read_byte(self.handle, address)
+        key = 'byte', address
+        if key in self.cache:
+            return self.cache[key]
+        res = mem.read_byte(self.handle, address)
+        self.cache[key] = res
+        return res
 
     def ptr(self, address):
-        return mem.read_long(self.handle, address)
+        key = 'ptr', address
+        if key in self.cache:
+            return self.cache[key]
+        res = mem.read_long(self.handle, address)
+        self.cache[key] = res
+        return res
 
     def str(self, address, size):
-        return mem.read_bytes(self.handle, address, size).decode("utf-8")
-
-
+        key = 'str', address, size
+        if key in self.cache:
+            return self.cache[key]
+        res = mem.read_bytes(self.handle, address, size).decode("utf-8")
+        self.cache[key] = res
+        return res

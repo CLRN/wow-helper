@@ -4,6 +4,8 @@ from components.settings import Settings
 
 import math
 
+import logging
+
 
 class MobPicker:
     def __init__(self, manager):
@@ -14,15 +16,23 @@ class MobPicker:
         if mob.target():
             return False
         if mob.npc_flags() or mob.type() != ObjectType.Unit or \
-                mob.level() - self.level > Settings.HIGHER_LEVEL_MOB_THRESHOLD or \
-                self.level - mob.level() > Settings.LOWER_LEVEL_MOB_THRESHOLD:
+           mob.level() - self.level > Settings.HIGHER_LEVEL_MOB_THRESHOLD or \
+           self.level - mob.level() > Settings.LOWER_LEVEL_MOB_THRESHOLD or \
+           mob.summoned():
             return False
         return mob.hp() != 0
 
     def _filter_lootable(self, mob):
         if mob.target():
             return False
-        return not mob.npc_flags() and mob.type() == ObjectType.Unit and not mob.hp() and mob.loot()
+        return not mob.npc_flags() and mob.type() == ObjectType.Unit and not mob.hp() and (mob.loot() or mob.skin())
+
+    def _count_proximity(self, mob, range):
+        count = 0
+        for o in self.manager.objects():
+            if o != mob and mob.type() == ObjectType.Unit and Relativity.distance(mob, o) < range:
+                count += 1
+        return count
 
     def _pick(self, filter_func):
         player = self.manager.player()
@@ -31,6 +41,15 @@ class MobPicker:
         # filter out units keeping mobs only
         mobs = filter(filter_func, self.manager.objects())
         ordered = sorted(mobs, key=lambda x: Relativity.distance(player, x))
+
+        while len(ordered):
+            # check proximity for nearby mobs
+            mob = ordered[0]
+            if self._count_proximity(mob, Settings.MOB_GROUP_PROXIMITY_RANGE) > 2:
+                logging.info(f"Skipping mob {mob} because it has several mobs nearby withing range {Settings.MOB_GROUP_PROXIMITY_RANGE}")
+                ordered.pop(0)
+            else:
+                break
 
         return ordered[0] if len(ordered) else None
 
@@ -45,9 +64,8 @@ class MobPicker:
 
         # filter out units keeping mobs only
         result = list()
-        mobs = filter(self._filter_alive, self.manager.objects())
-        for m in mobs:
-            if m.target() == player_id:
+        for m in self.manager.objects():
+            if m.hp() and m.target() == player_id and m.type() == ObjectType.Unit:
                 result.append(m)
 
         return result

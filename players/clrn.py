@@ -15,3 +15,9 @@ class PlayerSettings:
 
     def rejuvenation(self):
         return '4'
+
+    def mark(self):
+        return 'v'
+
+    def thorns(self):
+        return '='

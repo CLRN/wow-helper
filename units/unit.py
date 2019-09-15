@@ -29,3 +29,6 @@ class Unit(Object):
 
     def skin(self):
         return self.process.int(self.descriptors + CGUnitData.Flags * 4) & 0x4000000 != 0
+
+    def summoned(self):
+        return self.process.ptr(self.descriptors + CGUnitData.SummonedBy * 4)
