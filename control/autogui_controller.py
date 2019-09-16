@@ -35,7 +35,7 @@ class Controller(Thread):
             if item_to_do:
                 try:
                     func, args = item_to_do
-                    logging.debug(f"Executing {func.__name__} with {args}")
+                    logging.info(f"Executing {func.__name__} with {args}")
                     func(*args)
                 except:
                     logging.exception(f"Exception in controller thread")

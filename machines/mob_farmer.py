@@ -124,6 +124,10 @@ class MobFarmer(StateMachine):
             else:
                 target = self.fighting_mobs[0]
 
+        if len(self.fighting_mobs) and target not in self.fighting_mobs:
+            self.controller.press('esc')
+            return
+
         self._rotate(target, Settings.ATTACK_ANGLE_RANGE)
 
         player = self.object_manager.player()
@@ -177,8 +181,8 @@ class MobFarmer(StateMachine):
     def process(self):
         assert self.object_manager.player().hp()  # crash it when dead for now
 
-        self._report()
         self.fighting_mobs = self.mob_picker.fighting()
+        self._report()
         if len(self.fighting_mobs) and not self.is_fighting:
             self.fight()
         else:
