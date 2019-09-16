@@ -8,8 +8,9 @@ import logging
 
 
 class MobPicker:
-    def __init__(self, manager):
+    def __init__(self, manager, starting_point):
         self.manager = manager
+        self.starting_point = starting_point
         self.level = self.manager.player().level()
 
     def _filter_alive(self, mob):
@@ -48,7 +49,15 @@ class MobPicker:
         return sorted(mobs, key=lambda x: Relativity.distance(player, x))
 
     def pick_alive(self):
-        ordered = self._pick(self._filter_alive)
+        to_starting_point = Relativity.distance(self.manager.player(), self.starting_point)
+        if to_starting_point > Settings.FARMING_RANGE:
+            return self.starting_point
+        elif to_starting_point > Settings.FARMING_RANGE / 2:
+            ordered = self._pick(self._filter_alive)
+            ordered = sorted(ordered, key=lambda x: Relativity.distance(self.starting_point, x))
+        else:
+            ordered = self._pick(self._filter_alive)
+
         while len(ordered):
             # check proximity for nearby mobs
             mob = ordered[0]

@@ -1,6 +1,25 @@
 from constants.manual_offsets import Location, ObjectOffsets
 
 
+class Position:
+    def __init__(self, x, y, z):
+        self.px = x
+        self.py = y
+        self.pz = z
+
+    def x(self):
+        return self.px
+
+    def y(self):
+        return self.py
+
+    def z(self):
+        return None
+
+    def r(self):
+        return 0
+
+
 class Object:
     def __init__(self, process, offset):
         self.process = process
@@ -12,6 +31,9 @@ class Object:
 
     def type(self):
         return self.process.byte(self.offset + ObjectOffsets.ObjType)
+
+    def position(self):
+        return Position(self.x(), self.y(), self.z())
 
     def x(self):
         return self.process.float(self.offset + ObjectOffsets.UnitPosition + Location.X)

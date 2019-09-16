@@ -22,3 +22,5 @@ class Settings:
     MOB_GROUP_PROXIMITY_COUNT = 3  # do not engage in combat if a group has that many mobs
 
     REPORTING_TIME = 10
+
+    FARMING_RANGE = 300

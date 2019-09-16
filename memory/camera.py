@@ -32,6 +32,9 @@ def get_fov(process):
 
 
 def world_to_screen(process, window, x, y, z):
+    if not x or not y or not z:
+        return None
+
     fDiff = [float() for x in range(3)]
     fInv = [[float() for x in range(3)] for y in range(3)]
     fCam = [float() for x in range(3)]

@@ -72,7 +72,7 @@ if __name__ == '__main__':
     module = importlib.import_module(f'players.{manager.player_name.lower()}')
     settings = getattr(module, 'PlayerSettings')()
     combat_model = settings.model(settings, manager)
-    picker = MobPicker(manager)
+    picker = MobPicker(manager, manager.player().position())
 
     with Controller(window) as controller:
         farmer = MobFarmer(window=window,
