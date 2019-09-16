@@ -1,6 +1,5 @@
-pypiwin32
 python-statemachine
 pytest
 pyautogui
+pypiwin32
 pywin32
-

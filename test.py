@@ -19,8 +19,6 @@ import logging
 import time
 import math
 import importlib
-import os
-import shutil
 
 
 def make_dump(player, count=10000, offset=4, func='int', desc=True):
@@ -74,23 +72,18 @@ if __name__ == '__main__':
     module = importlib.import_module(f'players.{manager.player_name.lower()}')
     settings = getattr(module, 'PlayerSettings')()
     combat_model = settings.model(settings, manager)
-
-    controller = Controller(window)
     picker = MobPicker(manager)
 
-    farmer = MobFarmer(window=window,
-                       controller=controller,
-                       object_manager=manager,
-                       combat_model=combat_model,
-                       mob_picker=picker)
+    with Controller(window) as controller:
+        farmer = MobFarmer(window=window,
+                           controller=controller,
+                           object_manager=manager,
+                           combat_model=combat_model,
+                           mob_picker=picker)
 
-    if os.path.exists('screens'):
-        shutil.rmtree('screens')
-    os.makedirs('screens')
-
-    while True:
-        manager.update()
-        farmer.process()
+        while True:
+            manager.update()
+            farmer.process()
 
 
 

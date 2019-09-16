@@ -4,20 +4,48 @@ from pyautogui.tweens import easeInOutElastic, easeInOutCubic, easeInOutExpo
 import random
 import time
 import logging
+from threading import Thread, Lock
+import os
+import shutil
 
 
-class Controller:
+class Controller(Thread):
     def __init__(self, window):
-        self.last_action = time.time()
+        if os.path.exists('screens'):
+            shutil.rmtree('screens')
+        os.makedirs('screens')
+
         self.window = window
 
-    def _check_and_update_last_action(self):
-        spent = time.time() - self.last_action
-        if spent < Settings.MIN_ACTION_DELAY_SECONDS:
-            return False
-        else:
-            self.last_action = time.time()
-            return True
+        self.queue = list()
+        self.is_running = True
+        self.lock = Lock()
+
+        Thread.__init__(self, target=self._thread_func)
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.is_running = False
+        self.join()
+
+    def _thread_func(self):
+        while self.is_running:
+            with self.lock as _:
+                item_to_do = self.queue[0] if len(self.queue) else None
+                if item_to_do:
+                    self.queue.pop(0)
+
+            if item_to_do:
+                try:
+                    func, args = item_to_do
+                    func(*args)
+                except:
+                    logging.exception(f"Exception in controller thread")
+
+            time.sleep(self.random_pause())
 
     @staticmethod
     def random_pause():
@@ -29,23 +57,45 @@ class Controller:
     def down(self, key):
         pyautogui.keyDown(key)
 
-    def press(self, button):
-        if self._check_and_update_last_action():
-            if isinstance(button, tuple):
-                hot_key, key = button
+    def _press(self, button):
+        if isinstance(button, tuple):
+            hot_key, key = button
 
-                pyautogui.keyDown(hot_key, pause=self.random_pause())
-                pyautogui.press(key, pause=self.random_pause())
-                pyautogui.keyUp(hot_key)
-            else:
-                pyautogui.press(button, pause=self.random_pause())
+            pyautogui.keyDown(hot_key, pause=self.random_pause())
+            pyautogui.press(key, pause=self.random_pause())
+            pyautogui.keyUp(hot_key)
+        else:
+            pyautogui.press(button, pause=self.random_pause())
 
-    def click(self, x, y):
-        if self._check_and_update_last_action():
-            tween = random.choice([easeInOutElastic, easeInOutCubic, easeInOutExpo])
-            pyautogui.rightClick(x, y, tween=tween, duration=random.randint(200, 500) / 1000)
+    def _click(self, x, y):
+        tween = random.choice([easeInOutElastic, easeInOutCubic, easeInOutExpo])
+        pyautogui.rightClick(x, y, tween=tween, duration=random.randint(200, 500) / 1000)
 
-    def screen(self):
+    def _screen(self):
         rect = self.window.rect()
         screen = pyautogui.screenshot(region=(rect.left_top[0], rect.left_top[1], rect.bottom_right[0], rect.bottom_right[1]))
         screen.save(f'./screens/{int(time.time())}.png')
+
+    def _enqueue(self, func, args):
+        assert self.is_running
+
+        to_pop = None
+        with self.lock as _:
+            for i in range(len(self.queue)):
+                if self.queue[i][0] == func:
+                    to_pop = i
+                    break
+
+            if to_pop is not None:
+                self.queue.pop(to_pop)
+
+            self.queue.append((func, args))
+
+    def press(self, button):
+        self._enqueue(self._press, button)
+
+    def click(self, x, y):
+        self._enqueue(self._click, (x, y))
+
+    def screen(self):
+        self._enqueue(self._screen, ())
