@@ -3,3 +3,4 @@ pytest
 pyautogui
 pypiwin32
 pywin32
+python-telegram-bot

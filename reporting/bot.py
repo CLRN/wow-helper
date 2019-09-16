@@ -9,10 +9,6 @@ import logging
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-# Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,6 +18,7 @@ class Bot:
         self.context = None
         self.last_status = None
         self.last_screen = None
+        self.chat_id = None
 
         """Start the bot."""
         # Create the Updater and pass it your bot's token.
@@ -50,10 +47,12 @@ class Bot:
         self.last_status = data
         self.last_screen = image
         if self.context:
-            self.context.bot.send_message(text=f'{data}')
+            self.context.bot.send_message(chat_id=self.chat_id, text=f'{data}')
+            self.context.bot.send_photo(chat_id=self.chat_id, photo=open(self.last_screen, 'rb'))
 
     def _subscribe(self, update, context):
         self.context = context
+        self.chat_id = update.message.chat_id
         update.message.reply_text('Will keep you posted...')
 
     def _unsubscribe(self, update, context):
@@ -62,6 +61,8 @@ class Bot:
 
     def _status(self, update, context):
         update.message.reply_text(f'{self.last_status}')
+        if self.last_screen:
+            update.message.reply_photo(photo=open(self.last_screen, 'rb'))
 
     def echo(self, update, context):
         """Echo the user message."""
@@ -76,4 +77,8 @@ class Bot:
 
 
 if __name__ == '__main__':
+    # Enable logging
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        level=logging.INFO)
+
     Bot().wait()

@@ -5,16 +5,10 @@ import random
 import time
 import logging
 from threading import Thread, Lock
-import os
-import shutil
 
 
 class Controller(Thread):
     def __init__(self, window):
-        if os.path.exists('screens'):
-            shutil.rmtree('screens')
-        os.makedirs('screens')
-
         self.window = window
 
         self.queue = list()
@@ -72,11 +66,6 @@ class Controller(Thread):
         tween = random.choice([easeInOutElastic, easeInOutCubic, easeInOutExpo])
         pyautogui.rightClick(x, y, tween=tween, duration=random.randint(200, 500) / 1000)
 
-    def _screen(self):
-        rect = self.window.rect()
-        screen = pyautogui.screenshot(region=(rect.left_top[0], rect.left_top[1], rect.bottom_right[0], rect.bottom_right[1]))
-        screen.save(f'./screens/{int(time.time())}.png')
-
     def _enqueue(self, func, args):
         assert self.is_running
 
@@ -97,6 +86,3 @@ class Controller(Thread):
 
     def click(self, x, y):
         self._enqueue(self._click, (x, y))
-
-    def screen(self):
-        self._enqueue(self._screen, ())

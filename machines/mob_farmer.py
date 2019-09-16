@@ -9,6 +9,9 @@ from memory.camera import world_to_screen
 
 import logging
 import time
+import pyautogui
+import os
+import shutil
 
 
 class MobFarmer(StateMachine):
@@ -27,11 +30,12 @@ class MobFarmer(StateMachine):
     fight = searching.to(fighting) | restoring.to(fighting) | looting.to(fighting)
     loot = searching.to(looting)
 
-    def __init__(self, window, controller, object_manager, combat_model, mob_picker):
+    def __init__(self, window, controller, object_manager, combat_model, mob_picker, telegram_bot):
         self.window = window
         self.controller = controller
         self.object_manager = object_manager
         self.combat_model = combat_model
+        self.telegram_bot = telegram_bot
 
         self.mob_picker = mob_picker
         self.rotation = Rotation(self.controller)
@@ -44,6 +48,10 @@ class MobFarmer(StateMachine):
         self.last_report_time = 0
 
         StateMachine.__init__(self)
+
+        if os.path.exists('screens'):
+            shutil.rmtree('screens')
+        os.makedirs('screens')
 
     def _pick_attack_or_loot(self):
         loot = self.mob_picker.pick_lootable()
@@ -63,8 +71,20 @@ class MobFarmer(StateMachine):
 
         self.last_report_time = time.time()
 
-        logging.info(f"State: {self.current_state_value}, player: {self.object_manager.player()}")
-        self.controller.screen()
+        rect = self.window.rect()
+        screen = pyautogui.screenshot(region=(rect.left_top[0],
+                                              rect.left_top[1],
+                                              rect.bottom_right[0] - rect.left_top[0],
+                                              rect.bottom_right[1] - rect.left_top[1]))
+
+        name = f'./screens/{int(time.time())}.jpg'
+        screen.save(name)
+
+        player = self.object_manager.player()
+        logging.info(f"{self.current_state_value}, player: {player}, mobs: {self.fighting_mobs}")
+
+        self.telegram_bot.new_status(f"{self.current_state_value}, hp: {player.hp()}/{player.max_hp()}, "
+                                     f"mobs: {len(self.fighting_mobs or [])},", name)
 
     def _rotate(self, unit, angle_range):
         angle = Relativity.angle(self.object_manager.player(), unit)
