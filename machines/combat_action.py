@@ -12,7 +12,7 @@ class CombatAction(StateMachine):
 
     move_closer = out_of_range.to(moving_to) | moving_away.to(moving_to) | in_range.to(moving_to)
     stop = moving_to.to(in_range) | moving_away.to(in_range)
-    move_away = in_range.to(moving_away)
+    move_away = in_range.to(moving_away) | moving_to.to(moving_away)
     cast = moving_away.to(casting_started) | moving_to.to(casting_started) | in_range.to(casting_started) | \
            casting_started.to(casting_started)
     cast_detected = casting_started.to(casting) | moving_to.to(casting) | moving_away.to(casting) | in_range.to(casting)

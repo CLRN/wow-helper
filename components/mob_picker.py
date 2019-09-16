@@ -29,8 +29,13 @@ class MobPicker:
 
     def _count_proximity(self, mob, range):
         count = 0
+        mobs = list()
         for o in self.manager.objects():
-            if o != mob and mob.type() == ObjectType.Unit and Relativity.distance(mob, o) < range:
+            if o != mob and o.type() == ObjectType.Unit:
+                mobs.append((Relativity.distance(mob, o), o))
+
+        for range_to, mob in mobs:
+            if range_to <= range:
                 count += 1
         return count
 
@@ -40,23 +45,26 @@ class MobPicker:
 
         # filter out units keeping mobs only
         mobs = filter(filter_func, self.manager.objects())
-        ordered = sorted(mobs, key=lambda x: Relativity.distance(player, x))
+        return sorted(mobs, key=lambda x: Relativity.distance(player, x))
 
+    def pick_alive(self):
+        ordered = self._pick(self._filter_alive)
         while len(ordered):
             # check proximity for nearby mobs
             mob = ordered[0]
-            if self._count_proximity(mob, Settings.MOB_GROUP_PROXIMITY_RANGE) > 2:
+            if self._count_proximity(mob, Settings.MOB_GROUP_PROXIMITY_RANGE) + 1 >= Settings.MOB_GROUP_PROXIMITY_COUNT:
                 ordered.pop(0)
             else:
                 break
-
         return ordered[0] if len(ordered) else None
 
-    def pick_alive(self):
-        return self._pick(self._filter_alive)
+    def pick_closest(self):
+        ordered = self._pick(self._filter_alive)
+        return ordered[0] if len(ordered) else None
 
     def pick_lootable(self):
-        return self._pick(self._filter_lootable)
+        ordered = self._pick(self._filter_lootable)
+        return ordered[0] if len(ordered) else None
 
     def fighting(self):
         player_id = self.manager.player().id()

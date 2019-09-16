@@ -41,6 +41,7 @@ class Controller(Thread):
             if item_to_do:
                 try:
                     func, args = item_to_do
+                    logging.debug(f"Executing {func.__name__} with {args}")
                     func(*args)
                 except:
                     logging.exception(f"Exception in controller thread")
@@ -61,11 +62,11 @@ class Controller(Thread):
         if isinstance(button, tuple):
             hot_key, key = button
 
-            pyautogui.keyDown(hot_key, pause=self.random_pause())
+            pyautogui.keyDown(hot_key)
             pyautogui.press(key, pause=self.random_pause())
             pyautogui.keyUp(hot_key)
         else:
-            pyautogui.press(button, pause=self.random_pause())
+            pyautogui.press(button)
 
     def _click(self, x, y):
         tween = random.choice([easeInOutElastic, easeInOutCubic, easeInOutExpo])
@@ -92,7 +93,7 @@ class Controller(Thread):
             self.queue.append((func, args))
 
     def press(self, button):
-        self._enqueue(self._press, button)
+        self._enqueue(self._press, (button, ))
 
     def click(self, x, y):
         self._enqueue(self._click, (x, y))

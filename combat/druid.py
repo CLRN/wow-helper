@@ -16,14 +16,13 @@ class Model:
         self.object_manager = object_manager
 
     def _heal(self, auras):
-        player = self.object_manager.player()
         if CAT_FORM in auras:
             return Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)  # remove cat form
         elif REGROWTH not in auras:
             return Spell(REGROWTH, 0, 100, 2, self.player_settings.regrowth(), 0)
         elif REJUVENATION not in auras:
             return Spell(REJUVENATION, 0, 100, 0, self.player_settings.rejuvenation(), 0)
-        elif (player.hp() * 100) / player.max_hp() < Settings.HEAL_IN_COMBAT_THRESHOLD:
+        else:
             return Spell(0, 0, 100, 3, self.player_settings.healing_touch(), 0)
 
     def get_next_attacking_spell(self, mobs):

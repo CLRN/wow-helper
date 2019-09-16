@@ -19,5 +19,6 @@ class Settings:
     LOOT_ACTION_REPEAT_SECONDS = 3
 
     MOB_GROUP_PROXIMITY_RANGE = 20  # range between mobs to consider them a group
+    MOB_GROUP_PROXIMITY_COUNT = 3  # do not engage in combat if a group has that many mobs
 
     REPORTING_TIME = 10

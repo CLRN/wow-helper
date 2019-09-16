@@ -29,7 +29,7 @@ class MobSearch(StateMachine):
             if target_selected:
                 self.select()
             elif target_coords:
-                logging.debug(f"Picking target, range: {target_range}, coords: {target_coords}")
+                # logging.debug(f"Picking target, range: {target_range}, coords: {target_coords}")
                 self.controller.click(target_coords[0], target_coords[1])
         else:
             if time.time() - self.last_jump > random.randint(1, 10):
