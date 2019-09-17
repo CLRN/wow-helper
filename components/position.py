@@ -16,3 +16,6 @@ class Position:
 
     def r(self):
         return 0
+
+    def id(self):
+        return 0

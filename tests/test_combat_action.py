@@ -15,33 +15,33 @@ def test_smite_simple():
     machine = CombatAction(controller)
     assert machine.is_in_range
 
-    machine.process(30, smite_spell, False)
+    machine.active(30, 0, smite_spell, False)
     assert machine.is_moving_to
     calls['down'].append(call('w'))
 
-    machine.process(24, smite_spell, False)
+    machine.active(24, 0, smite_spell, False)
     assert machine.is_in_range
     calls['up'].append(call('w'))
 
-    machine.process(24, smite_spell, False)
+    machine.active(24, 0, smite_spell, False)
     assert machine.is_casting_started
     calls['press'].append(call(smite_spell.bind_key))
 
-    machine.process(24, smite_spell, True)
+    machine.active(24, 0, smite_spell, True)
     assert machine.is_casting
 
-    machine.process(10, smite_spell, True)
+    machine.active(10, 0, smite_spell, True)
     assert machine.is_casting
 
-    machine.process(1, smite_spell, False)
+    machine.active(1, 0, smite_spell, False)
     calls['down'].append(call('s'))
     assert machine.is_moving_away
 
-    machine.process(4, smite_spell, False)
+    machine.active(4, 0, smite_spell, False)
     calls['up'].append(call('s'))
     assert machine.is_in_range
 
-    machine.process(4, smite_spell, False)
+    machine.active(4, 0, smite_spell, False)
     assert machine.is_casting_started
     calls['press'].append(call(smite_spell.bind_key))
 
@@ -57,31 +57,31 @@ def test_melee_simple():
     machine = CombatAction(controller)
     assert machine.is_in_range
 
-    machine.process(30, attack_spell, False)
+    machine.active(30, 0, attack_spell, False)
     assert machine.is_moving_to
     calls['down'].append(call('w'))
 
-    machine.process(4, attack_spell, False)
+    machine.active(4, 0, attack_spell, False)
     assert machine.is_in_range
     calls['up'].append(call('w'))
 
-    machine.process(4, attack_spell, False)
+    machine.active(4, 0, attack_spell, False)
     assert machine.is_in_range
     calls['press'].append(call(attack_spell.bind_key))
 
-    machine.process(4, attack_spell, False)
+    machine.active(4, 0, attack_spell, False)
     assert machine.is_in_range
     calls['press'].append(call(attack_spell.bind_key))
 
-    machine.process(1, attack_spell, False)
+    machine.active(1, 0, attack_spell, False)
     calls['down'].append(call('s'))
     assert machine.is_moving_away
 
-    machine.process(4, attack_spell, False)
+    machine.active(4, 0, attack_spell, False)
     calls['up'].append(call('s'))
     assert machine.is_in_range
 
-    machine.process(4, attack_spell, False)
+    machine.active(4, 0, attack_spell, False)
     assert machine.is_in_range
     calls['press'].append(call(attack_spell.bind_key))
 

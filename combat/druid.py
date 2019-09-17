@@ -4,10 +4,11 @@ import time
 
 
 MARK_OF_THE_WILD = 6756
-THORNS = 782
+THORNS = 1075  # rank 3
 CAT_FORM = 768
-REJUVENATION = 2090
-REGROWTH = 8938
+REJUVENATION = 2090  # rank 4
+REGROWTH = 8939  # rank 3
+TIGERS_FURY = 5217  # rank 1
 
 
 class Model:
@@ -42,6 +43,9 @@ class Model:
 
         if CAT_FORM not in auras:
             return Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)
+
+        if TIGERS_FURY not in auras:
+            return Spell(TIGERS_FURY, 0, 100, 0, self.player_settings.tigers_fury(), 0)
 
         return Spell(0, 2, 4, 0, self.player_settings.attack(), 0)
 

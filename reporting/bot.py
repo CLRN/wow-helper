@@ -79,6 +79,13 @@ class Bot:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if self.context and self.chat_id and self.last_screen:
+                self.context.bot.send_photo(chat_id=self.chat_id,
+                                            photo=open(self.last_screen, 'rb'),
+                                            caption=f'Terminated at {self.last_status}')
+        except:
+            logging.exception("Failed to send termination update")
         self.updater.stop()
 
 

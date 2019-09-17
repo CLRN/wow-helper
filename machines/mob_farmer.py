@@ -38,10 +38,9 @@ class MobFarmer(StateMachine):
         self.telegram_bot = telegram_bot
 
         self.mob_picker = mob_picker
-        self.rotation = Rotation(self.controller)
-        self.looting = MobLooting(self.controller)
-        self.search = MobSearch(self.controller)
-        self.combat = CombatAction(self.controller)
+        self.looting_machine = MobLooting(self.controller)
+        self.searching_machine = MobSearch(self.controller)
+        self.fighting_machine = CombatAction(self.controller)
 
         self.fighting_mobs = None
         self.transition_time = time.time()
@@ -86,11 +85,6 @@ class MobFarmer(StateMachine):
         self.telegram_bot.new_status(f"{self.current_state_value}, hp: {player.hp()}/{player.max_hp()}, "
                                      f"mobs: {len(self.fighting_mobs or [])},", name)
 
-    def _rotate(self, unit, angle_range):
-        angle = Relativity.angle(self.object_manager.player(), unit)
-        self.rotation.process(angle, angle_range)
-        return angle
-
     def _get_coords(self, unit):
         return world_to_screen(self.object_manager.process, self.window, unit.x(), unit.y(), unit.z())
 
@@ -111,12 +105,11 @@ class MobFarmer(StateMachine):
         distance = Relativity.distance(self.object_manager.player(), attack)
         target = self.object_manager.target()
 
-        angle = self._rotate(attack, Settings.SEARCH_ANGLE_RANGE)
-        self.search.process(distance,
-                            target.id() == attack.id() if target else False,
-                            self._get_coords(attack),
-                            angle < Settings.SEARCH_ANGLE_RANGE)
-        if self.search.is_selected:
+        angle = Relativity.angle(self.object_manager.player(), attack)
+        if self.searching_machine.active(distance,
+                              target.id() == attack.id() if target else False,
+                                         self._get_coords(attack),
+                                         angle):
             self.found()
 
     def _do_fighting(self):
@@ -133,14 +126,14 @@ class MobFarmer(StateMachine):
         #     time.sleep(1)  # TODO: remove sleep
         #     return
 
-        self._rotate(target, Settings.ATTACK_ANGLE_RANGE)
-
         player = self.object_manager.player()
-        self.combat.process(Relativity.distance(player, target),
-                            self.combat_model.get_next_attacking_spell(self.fighting_mobs),
-                            player.spell())
+        self.fighting_machine.active(Relativity.distance(player, target),
+                                     Relativity.angle(self.object_manager.player(), target),
+                                     self.combat_model.get_next_attacking_spell(self.fighting_mobs),
+                                     player.spell())
 
     def _do_restoring(self):
+        # TODO: move to a separate state machine
         player = self.object_manager.player()
         if (player.hp() * 100) / player.max_hp() > Settings.REGEN_HP_THRESHOLD and \
            (player.power() * 100) / player.max_power() > Settings.REGEN_POWER_THRESHOLD:
@@ -173,17 +166,13 @@ class MobFarmer(StateMachine):
             return
 
         player = self.object_manager.player()
-        if not loot and time.time() - self.looting.last_looting_time > Settings.LOOT_ACTION_DELAY_SECONDS or \
+        if not loot and time.time() - self.looting_machine.last_looting_time > Settings.LOOT_ACTION_DELAY_SECONDS or \
            (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
             self.looted()
         elif loot:
             distance = Relativity.distance(self.object_manager.player(), loot)
-            if distance > Settings.LOOTING_RANGE:
-                self._rotate(loot, Settings.SEARCH_ANGLE_RANGE)
-            else:
-                self.rotation.stop_turning()
-
-            self.looting.process(distance, self._get_coords(loot))
+            angle = Relativity.angle(self.object_manager.player(), loot)
+            self.looting_machine.active(distance, self._get_coords(loot), angle)
 
     def process(self):
         assert self.object_manager.player().hp()  # crash it when dead for now
@@ -193,6 +182,10 @@ class MobFarmer(StateMachine):
         if len(self.fighting_mobs) and not self.is_fighting:
             self.fight()
         else:
+            for phase in ['looting', 'searching', 'fighting']:
+                if phase != self.current_state_value:
+                    getattr(self, f"{phase}_machine").inactive()
+
             getattr(self, f"_do_{self.current_state_value}")()
 
     def on_enter_searching(self):
@@ -216,16 +209,16 @@ class MobFarmer(StateMachine):
         self.transition_time = time.time()
 
     def on_exit_searching(self):
-        self.search = MobSearch(self.controller)
+        self.searching_machine = MobSearch(self.controller)
 
     def on_exit_fighting(self):
-        self.combat = CombatAction(self.controller)
+        self.fighting_machine = CombatAction(self.controller)
 
     def on_exit_restoring(self):
         pass
 
     def on_exit_looting(self):
-        self.looting = MobLooting(self.controller)
+        self.looting_machine = MobLooting(self.controller)
 
 
 

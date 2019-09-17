@@ -16,14 +16,18 @@ class Locator:
                     self.points.append([float(parts[0]), float(parts[1])])
 
         self.output_file = open(file_name, 'a')
-        self.tree = KDTree(self.points)
+
+        self.tree = KDTree(self.points) if len(self.points) else None
 
     def track(self, x, y):
-        distance, _ = self.tree.query([x, y], distance_upper_bound=Settings.WAYPOINTS_MIN_DISTANCE)
+        distance = np.inf
+        if self.tree:
+            distance, _ = self.tree.query([x, y], distance_upper_bound=Settings.WAYPOINTS_MIN_DISTANCE)
         if distance == np.inf:
             self.points.append([x, y])
-            self.output_file.write(f"{x},{y}\n")
             self.tree = KDTree(self.points)
+            self.output_file.write(f"{x},{y}\n")
+            self.output_file.flush()
 
     def known_route(self):
         return list()

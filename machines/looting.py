@@ -1,4 +1,5 @@
 from statemachine import StateMachine, State
+from machines.rotation import Rotation
 from components.settings import Settings
 import logging
 import time
@@ -11,15 +12,23 @@ class MobLooting(StateMachine):
     looted = State('Looted target')
 
     move_closer = out_of_range.to(moving_to) | in_range.to(moving_to) | looted.to(moving_to)
-    stop = moving_to.to(in_range) | in_range.to(in_range) | looted.to(in_range)
+    stop = moving_to.to(in_range) | in_range.to(in_range) | looted.to(in_range) | out_of_range.to(in_range)
     loot = in_range.to(looted)
 
     def __init__(self, controller):
         self.controller = controller
         StateMachine.__init__(self)
         self.last_looting_time = 0
+        self.rotation = Rotation(controller)
 
-    def process(self, target_range, target_coords):
+    def inactive(self):
+        self.stop()
+        self.rotation.stop_turning()
+
+    def active(self, target_range, target_coords, target_angle):
+        if self.rotation.process(target_angle) and self.is_in_range:
+            return
+
         if target_range > Settings.LOOTING_RANGE and not self.is_moving_to:
             self.move_closer()
         elif target_range < Settings.LOOTING_RANGE and self.is_moving_to:

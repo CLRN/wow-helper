@@ -1,8 +1,10 @@
 from statemachine import StateMachine, State
 from components.settings import Settings
+from machines.rotation import Rotation
 import logging
 import random
 import time
+import math
 
 
 class MobSearch(StateMachine):
@@ -12,15 +14,21 @@ class MobSearch(StateMachine):
     selected = State('Selected target')
 
     move_closer = out_of_range.to(moving_to) | in_range.to(moving_to)
-    stop = moving_to.to(in_range)
+    stop = moving_to.to(in_range) | out_of_range.to(in_range) | in_range.to(in_range) | selected.to(in_range)
     select = in_range.to(selected) | moving_to.to(selected)
 
     def __init__(self, controller):
         self.controller = controller
         StateMachine.__init__(self)
         self.last_jump = 0
+        self.rotation = Rotation(controller)
 
-    def process(self, target_range, target_selected, target_coords, is_in_angle):
+    def inactive(self):
+        self.stop()
+        self.rotation.stop_turning()
+
+    def active(self, target_range, target_selected, target_coords, angle):
+        self.rotation.process(angle, Settings.SEARCH_ANGLE_RANGE)
         if target_range > Settings.SEARCH_RANGE and not self.is_moving_to:
             self.move_closer()
         elif target_range < Settings.SEARCH_RANGE and self.is_moving_to:
@@ -28,7 +36,8 @@ class MobSearch(StateMachine):
         elif self.is_in_range or target_coords:
             if target_selected:
                 self.select()
-            elif target_coords and is_in_angle:
+                return True
+            elif target_coords and math.fabs(angle) < Settings.SEARCH_ANGLE_RANGE:
                 # logging.debug(f"Picking target, range: {target_range}, coords: {target_coords}")
                 self.controller.click(target_coords[0], target_coords[1])
         else:

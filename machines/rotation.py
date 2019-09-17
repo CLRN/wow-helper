@@ -30,6 +30,7 @@ class Rotation(StateMachine):
                 self.turn_left()
             else:
                 self.turn_right()
+            return True
 
     def on_enter_left(self):
         logging.debug("Turning left")

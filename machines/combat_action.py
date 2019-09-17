@@ -1,4 +1,5 @@
 from statemachine import StateMachine, State
+from machines.rotation import Rotation
 import logging
 
 
@@ -11,7 +12,8 @@ class CombatAction(StateMachine):
     casting = State('Casting a spell')
 
     move_closer = out_of_range.to(moving_to) | moving_away.to(moving_to) | in_range.to(moving_to)
-    stop = moving_to.to(in_range) | moving_away.to(in_range)
+    stop = out_of_range.to(in_range) | moving_to.to(in_range) | in_range.to(in_range) | moving_away.to(in_range) | \
+           casting_started.to(in_range) | casting.to(in_range)
     move_away = in_range.to(moving_away) | moving_to.to(moving_away)
     cast = moving_away.to(casting_started) | moving_to.to(casting_started) | in_range.to(casting_started) | \
            casting_started.to(casting_started)
@@ -22,8 +24,15 @@ class CombatAction(StateMachine):
         self.controller = controller
         self.spell = None
         StateMachine.__init__(self)
+        self.rotation = Rotation(controller)
 
-    def process(self, target_range, next_spell, is_casting):
+    def inactive(self):
+        self.stop()
+        self.rotation.stop_turning()
+
+    def active(self, target_range, angle, next_spell, is_casting):
+        self.rotation.process(angle)
+
         previous_spell = self.spell
         self.spell = next_spell
 

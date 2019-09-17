@@ -10,6 +10,9 @@ class PlayerSettings:
     def attack(self):
         return '1'
 
+    def tigers_fury(self):
+        return 'f'
+
     def regrowth(self):
         return '5'
 

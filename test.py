@@ -2,6 +2,7 @@ from memory.process import Process
 from memory.object_manager import ObjectManager
 from control.autogui_controller import Controller
 from reporting.bot import Bot
+from algos.locator import Locator
 from machines.rotation import Rotation
 from algos.relativity import Relativity
 from constants.offsets import Offsets
@@ -75,6 +76,7 @@ if __name__ == '__main__':
     settings = getattr(module, 'PlayerSettings')()
     combat_model = settings.model(settings, manager)
     picker = MobPicker(manager, manager.player().position())
+    locator = Locator()
     with Bot() as telegram:
         with Controller(window) as controller:
             farmer = MobFarmer(window=window,
@@ -87,6 +89,7 @@ if __name__ == '__main__':
             while True:
                 manager.update()
                 farmer.process()
+                locator.track(manager.player().x(), manager.player().y())
 
 
 

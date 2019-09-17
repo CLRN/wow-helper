@@ -16,7 +16,7 @@ def test_farm():
                         combat_model=combat_model,
                         mob_picker=mob_picker,
                         telegram_bot=None)
-    assert machine.is_looting
+    assert machine.is_restoring
 
 
 
