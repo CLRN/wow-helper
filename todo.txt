@@ -1,0 +1,10 @@
+1. Implement location storage
+    + track player movements
+    + keep track of accessible way points
+2. Implement algorithm for getting path to a location through a list of known way points
+    - generate a path to a mob consisting of way points to visit
+        * firstly, assume direct line is available and generate way points
+        * if player is stuck at some point on that line invalidate remaining points of the line and try to rebuild using known locations
+3. Alter mob search machine:
+    - make it independent, if it's called it handles all journey details
+    - add detection when player is stuck, call algorithm for rebuilding path

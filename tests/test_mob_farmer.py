@@ -14,7 +14,8 @@ def test_farm():
                         controller=controller,
                         object_manager=object_manager,
                         combat_model=combat_model,
-                        mob_picker=mob_picker)
+                        mob_picker=mob_picker,
+                        telegram_bot=None)
     assert machine.is_looting
 
 

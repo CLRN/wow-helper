@@ -1,23 +1,5 @@
 from constants.manual_offsets import Location, ObjectOffsets
-
-
-class Position:
-    def __init__(self, x, y, z):
-        self.px = x
-        self.py = y
-        self.pz = z
-
-    def x(self):
-        return self.px
-
-    def y(self):
-        return self.py
-
-    def z(self):
-        return None
-
-    def r(self):
-        return 0
+from components.position import Position
 
 
 class Object:

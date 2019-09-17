@@ -24,3 +24,6 @@ class Settings:
     REPORTING_TIME = 10
 
     FARMING_RANGE = 300
+
+    WAYPOINTS_FILE = 'waypoints.dat'
+    WAYPOINTS_MIN_DISTANCE = 10
