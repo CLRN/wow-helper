@@ -24,7 +24,7 @@ import math
 import importlib
 
 
-def make_dump(player, count=10000, offset=4, func='int', desc=True):
+def make_dump(player, count=50000, offset=4, func='int', desc=True):
     logging.info("waiting")
 
     for i in range(0, 5):
@@ -39,7 +39,7 @@ def make_dump(player, count=10000, offset=4, func='int', desc=True):
     for i in range(0, count):
         values.append(getattr(process, func)(start_offset + i * offset))
 
-    time.sleep(10)
+    time.sleep(5)
     logging.info("comparing")
 
     values2 = list()
@@ -62,15 +62,22 @@ if __name__ == '__main__':
         logging.info(o)
 
     # while True:
-    #     manager.update()14
+    #     manager.update()
+    #     logging.info(manager.player())
     #     target = manager.target()
-    #     for o in manager.objects():
-    #         if o.target():
-    #             logging.info(o)
-    #
-    #         logging.info(target.skin())
-    #         time.sleep(0.3)
-    #         make_dump(target)
+    #     if target:
+    #         logging.info(target)
+    #         #make_dump(target)
+    #         #break
+    #     time.sleep(0.3)
+
+        # for o in manager.objects():
+        #     if o.target():
+        #         logging.info(o)
+        #
+        #     logging.info(target.skin())
+        #     time.sleep(0.3)
+        #     make_dump(target)
 
     module = importlib.import_module(f'players.{manager.player_name.lower()}')
     settings = getattr(module, 'PlayerSettings')()

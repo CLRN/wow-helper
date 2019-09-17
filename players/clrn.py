@@ -13,6 +13,9 @@ class PlayerSettings:
     def tigers_fury(self):
         return 'f'
 
+    def rake(self):
+        return '3'
+
     def regrowth(self):
         return '5'
 

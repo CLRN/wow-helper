@@ -19,6 +19,7 @@ class MobPicker:
         if mob.npc_flags() or mob.type() != ObjectType.Unit or \
            mob.level() - self.level > Settings.HIGHER_LEVEL_MOB_THRESHOLD or \
            self.level - mob.level() > Settings.LOWER_LEVEL_MOB_THRESHOLD or \
+           mob.faction() in Settings.FRIENDLY_FACTIONS or \
            mob.summoned():
             return False
         return mob.hp() != 0

@@ -3,6 +3,7 @@ from machines.rotation import Rotation
 from components.settings import Settings
 import logging
 import time
+import random
 
 
 class MobLooting(StateMachine):
@@ -20,6 +21,7 @@ class MobLooting(StateMachine):
         StateMachine.__init__(self)
         self.last_looting_time = 0
         self.rotation = Rotation(controller)
+        self.last_jump = 0
 
     def inactive(self):
         self.stop()
@@ -37,6 +39,9 @@ class MobLooting(StateMachine):
             logging.debug(f"Looting target. range: {target_range}, coords: {target_coords}")
             self.controller.click(target_coords[0], target_coords[1])
             self.last_looting_time = time.time()
+        elif self.is_moving_to and time.time() - self.last_jump > random.randint(1, 10):
+            self.controller.press('space')
+            self.last_jump = time.time()
 
     def on_enter_moving_to(self):
         logging.debug("Starting moving closer")

@@ -80,7 +80,8 @@ class MobFarmer(StateMachine):
         screen.save(name)
 
         player = self.object_manager.player()
-        logging.info(f"{self.current_state_value}, player: {player}, mobs: {self.fighting_mobs}")
+        logging.info(f"{self.current_state_value}, player: {player}, target: {player.target()}, "
+                     f"mobs: {self.fighting_mobs}")
 
         self.telegram_bot.new_status(f"{self.current_state_value}, hp: {player.hp()}/{player.max_hp()}, "
                                      f"mobs: {len(self.fighting_mobs or [])},", name)
@@ -129,7 +130,7 @@ class MobFarmer(StateMachine):
         player = self.object_manager.player()
         self.fighting_machine.active(Relativity.distance(player, target),
                                      Relativity.angle(self.object_manager.player(), target),
-                                     self.combat_model.get_next_attacking_spell(self.fighting_mobs),
+                                     self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
                                      player.spell())
 
     def _do_restoring(self):

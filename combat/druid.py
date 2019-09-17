@@ -1,5 +1,6 @@
 from components.spell import Spell
 from components.settings import Settings
+from algos.relativity import Relativity
 import time
 
 
@@ -9,6 +10,7 @@ CAT_FORM = 768
 REJUVENATION = 2090  # rank 4
 REGROWTH = 8939  # rank 3
 TIGERS_FURY = 5217  # rank 1
+RAKE = 1822  # rank 1
 
 
 class Model:
@@ -27,7 +29,7 @@ class Model:
         elif (player.hp() * 100) / player.max_hp() < 70:
             return Spell(0, 0, 100, 3, self.player_settings.healing_touch(), 0)
 
-    def get_next_attacking_spell(self, mobs):
+    def get_next_attacking_spell(self, mobs, target):
         # check auras first
         player = self.object_manager.player()
         auras = player.auras()
@@ -44,7 +46,10 @@ class Model:
         if CAT_FORM not in auras:
             return Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)
 
-        if TIGERS_FURY not in auras:
+        if target.hp() == target.max_hp():
+            return Spell(RAKE, 2, 4, 0, self.player_settings.rake(), 10)
+
+        if TIGERS_FURY not in auras and Relativity.distance(player, target) < 5:
             return Spell(TIGERS_FURY, 0, 100, 0, self.player_settings.tigers_fury(), 0)
 
         return Spell(0, 2, 4, 0, self.player_settings.attack(), 0)

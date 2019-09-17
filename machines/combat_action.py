@@ -1,6 +1,8 @@
 from statemachine import StateMachine, State
 from machines.rotation import Rotation
 import logging
+import time
+import random
 
 
 class CombatAction(StateMachine):
@@ -25,6 +27,7 @@ class CombatAction(StateMachine):
         self.spell = None
         StateMachine.__init__(self)
         self.rotation = Rotation(controller)
+        self.last_jump = 0
 
     def inactive(self):
         self.stop()
@@ -54,10 +57,13 @@ class CombatAction(StateMachine):
                 self.stop()
             elif not self.is_casting:
                 if previous_spell and previous_spell.bind_key != self.spell.bind_key:
-                    logging.debug(f"Casting spell {self.spell.bind_key}")
+                    logging.info(f"Casting spell {self.spell.bind_key}")
                 self.controller.press(self.spell.bind_key)
                 if self.spell.cast_time:
                     self.cast()
+        elif self.is_moving_to and time.time() - self.last_jump > random.randint(3, 10):
+            self.controller.press('space')
+            self.last_jump = time.time()
 
     def on_enter_moving_to(self):
         logging.debug("Starting moving closer")

@@ -27,3 +27,5 @@ class Settings:
 
     WAYPOINTS_FILE = 'waypoints.dat'
     WAYPOINTS_MIN_DISTANCE = 10
+
+    FRIENDLY_FACTIONS = [83]  # read from db

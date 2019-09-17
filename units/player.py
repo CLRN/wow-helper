@@ -9,13 +9,3 @@ class Player(Unit):
     def is_attacking(self):
         return self.process.int(self.offset + ObjectOffsets.IsAttacking) != 0
 
-    def auras(self):
-        offset = self.offset + ObjectOffsets.FirstAuraOffset
-
-        result = list()
-        for i in range(0, 20):
-            aura = self.process.int(offset)
-            if aura:
-                result.append(aura)
-            offset += ObjectOffsets.NextAuraOffset
-        return result
