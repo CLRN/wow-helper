@@ -20,7 +20,7 @@ class MobSearch(StateMachine):
         StateMachine.__init__(self)
         self.last_jump = 0
 
-    def process(self, target_range, target_selected, target_coords):
+    def process(self, target_range, target_selected, target_coords, is_in_angle):
         if target_range > Settings.SEARCH_RANGE and not self.is_moving_to:
             self.move_closer()
         elif target_range < Settings.SEARCH_RANGE and self.is_moving_to:
@@ -28,7 +28,7 @@ class MobSearch(StateMachine):
         elif self.is_in_range or target_coords:
             if target_selected:
                 self.select()
-            elif target_coords:
+            elif target_coords and is_in_angle:
                 # logging.debug(f"Picking target, range: {target_range}, coords: {target_coords}")
                 self.controller.click(target_coords[0], target_coords[1])
         else:

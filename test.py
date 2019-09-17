@@ -75,19 +75,18 @@ if __name__ == '__main__':
     settings = getattr(module, 'PlayerSettings')()
     combat_model = settings.model(settings, manager)
     picker = MobPicker(manager, manager.player().position())
-    telegram = Bot()
+    with Bot() as telegram:
+        with Controller(window) as controller:
+            farmer = MobFarmer(window=window,
+                               controller=controller,
+                               object_manager=manager,
+                               combat_model=combat_model,
+                               mob_picker=picker,
+                               telegram_bot=telegram)
 
-    with Controller(window) as controller:
-        farmer = MobFarmer(window=window,
-                           controller=controller,
-                           object_manager=manager,
-                           combat_model=combat_model,
-                           mob_picker=picker,
-                           telegram_bot=telegram)
-
-        while True:
-            manager.update()
-            farmer.process()
+            while True:
+                manager.update()
+                farmer.process()
 
 
 

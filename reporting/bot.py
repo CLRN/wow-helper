@@ -47,8 +47,9 @@ class Bot:
         self.last_status = data
         self.last_screen = image
         if self.context:
-            self.context.bot.send_message(chat_id=self.chat_id, text=f'{data}')
-            self.context.bot.send_photo(chat_id=self.chat_id, photo=open(self.last_screen, 'rb'))
+            self.context.bot.send_photo(chat_id=self.chat_id,
+                                        photo=open(self.last_screen, 'rb'),
+                                        caption=f'{data}')
 
     def _subscribe(self, update, context):
         self.context = context
@@ -60,9 +61,8 @@ class Bot:
         update.message.reply_text('Bye!')
 
     def _status(self, update, context):
-        update.message.reply_text(f'{self.last_status}')
         if self.last_screen:
-            update.message.reply_photo(photo=open(self.last_screen, 'rb'))
+            update.message.reply_photo(photo=open(self.last_screen, 'rb'), caption=f'{self.last_status}')
 
     def echo(self, update, context):
         """Echo the user message."""
@@ -74,6 +74,12 @@ class Bot:
 
     def wait(self):
         self.updater.idle()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.updater.stop()
 
 
 if __name__ == '__main__':

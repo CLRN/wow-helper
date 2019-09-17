@@ -17,8 +17,8 @@ import shutil
 class MobFarmer(StateMachine):
     searching = State('Searching for next mob')
     fighting = State('Fighting with mob')
-    looting = State('Looting mobs', initial=True)
-    restoring = State('Restoring HP/Power')
+    looting = State('Looting mobs')
+    restoring = State('Restoring HP/Power', initial=True)
     eating = State('Eating/drinking to restore HP/Power')
 
     found = searching.to(fighting)
@@ -89,6 +89,7 @@ class MobFarmer(StateMachine):
     def _rotate(self, unit, angle_range):
         angle = Relativity.angle(self.object_manager.player(), unit)
         self.rotation.process(angle, angle_range)
+        return angle
 
     def _get_coords(self, unit):
         return world_to_screen(self.object_manager.process, self.window, unit.x(), unit.y(), unit.z())
@@ -110,8 +111,11 @@ class MobFarmer(StateMachine):
         distance = Relativity.distance(self.object_manager.player(), attack)
         target = self.object_manager.target()
 
-        self._rotate(attack, Settings.SEARCH_ANGLE_RANGE)
-        self.search.process(distance, target.id() == attack.id() if target else False, self._get_coords(attack))
+        angle = self._rotate(attack, Settings.SEARCH_ANGLE_RANGE)
+        self.search.process(distance,
+                            target.id() == attack.id() if target else False,
+                            self._get_coords(attack),
+                            angle < Settings.SEARCH_ANGLE_RANGE)
         if self.search.is_selected:
             self.found()
 
@@ -124,9 +128,10 @@ class MobFarmer(StateMachine):
             else:
                 target = self.fighting_mobs[0]
 
-        if len(self.fighting_mobs) and target not in self.fighting_mobs:
-            self.controller.press('esc')
-            return
+        # if len(self.fighting_mobs) and target and target not in self.fighting_mobs:
+        #     self.controller.press('esc')
+        #     time.sleep(1)  # TODO: remove sleep
+        #     return
 
         self._rotate(target, Settings.ATTACK_ANGLE_RANGE)
 
@@ -167,7 +172,9 @@ class MobFarmer(StateMachine):
         if time.time() - self.transition_time < Settings.LOOT_ACTION_DELAY_SECONDS:
             return
 
-        if not loot and time.time() - self.looting.last_looting_time > Settings.LOOT_ACTION_DELAY_SECONDS:
+        player = self.object_manager.player()
+        if not loot and time.time() - self.looting.last_looting_time > Settings.LOOT_ACTION_DELAY_SECONDS or \
+           (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
             self.looted()
         elif loot:
             distance = Relativity.distance(self.object_manager.player(), loot)

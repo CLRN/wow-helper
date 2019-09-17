@@ -1,6 +1,9 @@
 from constants.manual_offsets import Location, ObjectOffsets
 from components.position import Position
 
+    def id(self):
+        return 0
+
 
 class Object:
     def __init__(self, process, offset):
