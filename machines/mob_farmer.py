@@ -38,9 +38,10 @@ class MobFarmer(StateMachine):
         self.telegram_bot = telegram_bot
 
         self.mob_picker = mob_picker
-        self.looting_machine = MobLooting(self.controller)
-        self.searching_machine = MobSearch(self.controller)
-        self.fighting_machine = CombatAction(self.controller)
+        self.rotation = Rotation(controller)
+        self.looting_machine = MobLooting(self.controller, self.rotation)
+        self.searching_machine = MobSearch(self.controller, self.rotation)
+        self.fighting_machine = CombatAction(self.controller, self.rotation)
 
         self.fighting_mobs = None
         self.transition_time = time.time()
@@ -210,16 +211,16 @@ class MobFarmer(StateMachine):
         self.transition_time = time.time()
 
     def on_exit_searching(self):
-        self.searching_machine = MobSearch(self.controller)
+        self.searching_machine = MobSearch(self.controller, self.rotation)
 
     def on_exit_fighting(self):
-        self.fighting_machine = CombatAction(self.controller)
+        self.fighting_machine = CombatAction(self.controller, self.rotation)
 
-    def on_exit_restoring(self):
+    def on_exit_restoring(self):1
         pass
 
     def on_exit_looting(self):
-        self.looting_machine = MobLooting(self.controller)
+        self.looting_machine = MobLooting(self.controller, self.rotation)
 
 
 

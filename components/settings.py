@@ -1,5 +1,5 @@
 class Settings:
-    SEARCH_ANGLE_RANGE = 40
+    SEARCH_ANGLE_RANGE = 20
     ATTACK_ANGLE_RANGE = 30
 
     REGEN_HP_THRESHOLD = 80
@@ -23,7 +23,7 @@ class Settings:
 
     REPORTING_TIME = 10
 
-    FARMING_RANGE = 150
+    FARMING_RANGE = 100
 
     WAYPOINTS_FILE = 'waypoints.dat'
     WAYPOINTS_MIN_DISTANCE = 10

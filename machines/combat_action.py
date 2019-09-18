@@ -22,16 +22,15 @@ class CombatAction(StateMachine):
     cast_detected = casting_started.to(casting) | moving_to.to(casting) | moving_away.to(casting) | in_range.to(casting)
     casting_finished = casting.to(in_range)
 
-    def __init__(self, controller):
+    def __init__(self, controller, rotation):
         self.controller = controller
         self.spell = None
         StateMachine.__init__(self)
-        self.rotation = Rotation(controller)
+        self.rotation = rotation
         self.last_jump = 0
 
     def inactive(self):
         self.stop()
-        self.rotation.stop_turning()
 
     def active(self, target_range, angle, next_spell, is_casting):
         self.rotation.process(angle)

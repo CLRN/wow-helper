@@ -16,16 +16,15 @@ class MobLooting(StateMachine):
     stop = moving_to.to(in_range) | in_range.to(in_range) | looted.to(in_range) | out_of_range.to(in_range)
     loot = in_range.to(looted)
 
-    def __init__(self, controller):
+    def __init__(self, controller, rotation):
         self.controller = controller
         StateMachine.__init__(self)
         self.last_looting_time = 0
-        self.rotation = Rotation(controller)
+        self.rotation = rotation
         self.last_jump = 0
 
     def inactive(self):
         self.stop()
-        self.rotation.stop_turning()
 
     def active(self, target_range, target_coords, target_angle):
         if self.rotation.process(target_angle) and self.is_in_range:
@@ -39,7 +38,7 @@ class MobLooting(StateMachine):
             logging.debug(f"Looting target. range: {target_range}, coords: {target_coords}")
             self.controller.click(target_coords[0], target_coords[1])
             self.last_looting_time = time.time()
-        elif self.is_moving_to and time.time() - self.last_jump > random.randint(1, 10):
+        elif self.is_moving_to and time.time() - self.last_jump > random.randint(5, 10):
             self.controller.press('space')
             self.last_jump = time.time()
 

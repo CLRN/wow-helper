@@ -36,10 +36,14 @@ class ObjectManager:
     def _offsets(self):
         current = self.process.ptr(self._obj_manager + Global.FirstObj)
 
+        visited = list()
+
         while current:
             try:
                 next_obj = self.process.ptr(current + Global.NextObj)
                 yield current
+                if next_obj in visited:
+                    break
                 current = next_obj
             except:
                 break

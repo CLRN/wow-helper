@@ -17,15 +17,14 @@ class MobSearch(StateMachine):
     stop = moving_to.to(in_range) | out_of_range.to(in_range) | in_range.to(in_range) | selected.to(in_range)
     select = in_range.to(selected) | moving_to.to(selected)
 
-    def __init__(self, controller):
+    def __init__(self, controller, rotation):
         self.controller = controller
         StateMachine.__init__(self)
         self.last_jump = 0
-        self.rotation = Rotation(controller)
+        self.rotation = rotation
 
     def inactive(self):
         self.stop()
-        self.rotation.stop_turning()
 
     def active(self, target_range, target_selected, target_coords, angle):
         self.rotation.process(angle, Settings.SEARCH_ANGLE_RANGE)
@@ -41,7 +40,7 @@ class MobSearch(StateMachine):
                 # logging.debug(f"Picking target, range: {target_range}, coords: {target_coords}")
                 self.controller.click(target_coords[0], target_coords[1])
         else:
-            if time.time() - self.last_jump > random.randint(1, 10):
+            if time.time() - self.last_jump > random.randint(5, 10):
                 self.controller.press('space')
                 self.last_jump = time.time()
 
