@@ -5,6 +5,9 @@ class Position:
         self.py = y
         self.pz = z
 
+    def __str__(self):
+        return f"{self.x(), self.y()}"
+
     def x(self):
         return self.px
 

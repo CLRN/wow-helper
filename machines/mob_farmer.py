@@ -49,6 +49,7 @@ class MobFarmer(StateMachine):
         self.fighting_mobs = None
         self.transition_time = time.time()
         self.last_report_time = 0
+        self.last_attack_target = None
 
         StateMachine.__init__(self)
 
@@ -102,6 +103,10 @@ class MobFarmer(StateMachine):
         if not attack:
             return
 
+        if not self.last_attack_target or self.last_attack_target.id() != attack.id():
+            self.last_attack_target = attack
+            logging.info(f"Found new target to farm: {attack}")
+
         buf_to_cast = self.combat_model.get_next_buff()
         if buf_to_cast:
             self.controller.press(buf_to_cast.bind_key)
@@ -112,7 +117,7 @@ class MobFarmer(StateMachine):
 
         angle = Relativity.angle(self.object_manager.player(), attack)
         if self.searching_machine.active(distance,
-                              target.id() == attack.id() if target else False,
+                                         target.id() == attack.id() if target else False,
                                          self._get_coords(attack),
                                          angle):
             self.found()
