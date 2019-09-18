@@ -79,11 +79,11 @@ class Model:
         player = self.object_manager.player()
         hp = (player.hp() * 100) / player.max_hp() < Settings.FLEE_HP_THRESHOLD
         power = (player.power() * 100) / player.max_power() < Settings.FLEE_POWER_THRESHOLD
-        return len(mobs) > 2 or (len(mobs) > 1 and hp and power)
+        return len(mobs) > 2 or (hp and power)
 
     def get_next_fleeing_spell(self):
         auras = self.object_manager.player().auras()
-        if REJUVENATION not in auras:
-            return self.cat if CAT_FORM in auras else self.rejuvenation
+        # if REJUVENATION not in auras:
+        #     return self.cat if CAT_FORM in auras else self.rejuvenation
 
         return self.cat if CAT_FORM not in auras else None

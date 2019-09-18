@@ -31,7 +31,7 @@ class MobLooting(StateMachine):
             self.move_closer()
         elif target_range < Settings.LOOTING_RANGE and self.is_moving_to:
             self.stop()
-        elif self.is_in_range and target_coords and time.time() - self.last_looting_time > Settings.LOOT_ACTION_REPEAT_SECONDS:
+        elif self.is_in_range and target_coords:
             logging.debug(f"Looting target. range: {target_range}, coords: {target_coords}")
             self.controller.click(target_coords[0], target_coords[1])
             self.last_looting_time = time.time()

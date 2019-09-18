@@ -10,6 +10,7 @@ class Settings:
 
     FLEE_HP_THRESHOLD = 40
     FLEE_POWER_THRESHOLD = 40
+    FLEE_SECONDS_TO_DIE_THRESHOLD = 15
 
     LOOTING_RANGE = 4
 
@@ -33,3 +34,4 @@ class Settings:
     WAYPOINTS_MIN_DISTANCE = 10
 
     FRIENDLY_FACTIONS = [83]  # read from db
+

@@ -50,6 +50,9 @@ class MobFarmer(StateMachine):
         self.transition_time = time.time()
         self.last_report_time = 0
         self.last_attack_target = None
+        self.attack_start_time = 0
+        self.attack_start_hp = 0
+        self.last_incoming_dps_time = 0
 
         StateMachine.__init__(self)
 
@@ -131,12 +134,18 @@ class MobFarmer(StateMachine):
             else:
                 target = self.fighting_mobs[0]
 
-        if self.combat_model.get_need_to_flee(self.fighting_mobs):
+        player = self.object_manager.player()
+        incoming_dps = (self.attack_start_hp - player.hp()) / (time.time() - self.attack_start_time)
+        to_die = player.hp() / incoming_dps
+        if time.time() - self.last_incoming_dps_time > 5:
+            logging.info(f"Incoming DPS: {incoming_dps}, to die: {to_die}, mobs: {len(self.fighting_mobs)}")
+            self.last_incoming_dps_time = time.time()
+
+        if self.combat_model.get_need_to_flee(self.fighting_mobs) or to_die < Settings.FLEE_SECONDS_TO_DIE_THRESHOLD:
             logging.info(f"Running away from {self.fighting_mobs}, player: {self.object_manager.player()}")
             self.flee()
             return
 
-        player = self.object_manager.player()
         self.fighting_machine.active(Relativity.distance(player, target),
                                      Relativity.angle(self.object_manager.player(), target),
                                      self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
@@ -176,8 +185,7 @@ class MobFarmer(StateMachine):
             return
 
         player = self.object_manager.player()
-        if not loot and time.time() - self.looting_machine.last_looting_time > Settings.LOOT_ACTION_DELAY_SECONDS or \
-           (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
+        if not loot or (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
             self.looted()
         elif loot:
             distance = Relativity.distance(self.object_manager.player(), loot)
@@ -213,6 +221,8 @@ class MobFarmer(StateMachine):
     def on_enter_fighting(self):
         logging.info(f"Fighting: {self.object_manager.objects()}")
         self.transition_time = time.time()
+        self.attack_start_time = time.time()
+        self.attack_start_hp = self.object_manager.player().hp()
 
     def on_enter_restoring(self):
         logging.info("Restoring")
