@@ -216,7 +216,7 @@ class MobFarmer(StateMachine):
     def on_exit_fighting(self):
         self.fighting_machine = CombatAction(self.controller, self.rotation)
 
-    def on_exit_restoring(self):1
+    def on_exit_restoring(self):
         pass
 
     def on_exit_looting(self):
