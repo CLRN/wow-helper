@@ -20,6 +20,7 @@ class MobFarmer(StateMachine):
     looting = State('Looting mobs')
     restoring = State('Restoring HP/Power', initial=True)
     eating = State('Eating/drinking to restore HP/Power')
+    fleeing = State('Running away from mobs')
 
     found = searching.to(fighting)
     lost = fighting.to(searching)
@@ -29,6 +30,8 @@ class MobFarmer(StateMachine):
     eat = restoring.to(eating)
     fight = searching.to(fighting) | restoring.to(fighting) | looting.to(fighting)
     loot = searching.to(looting)
+    flee = fighting.to(fleeing)
+    fled = fleeing.to(restoring)
 
     def __init__(self, window, controller, object_manager, combat_model, mob_picker, telegram_bot):
         self.window = window
@@ -123,10 +126,10 @@ class MobFarmer(StateMachine):
             else:
                 target = self.fighting_mobs[0]
 
-        # if len(self.fighting_mobs) and target and target not in self.fighting_mobs:
-        #     self.controller.press('esc')
-        #     time.sleep(1)  # TODO: remove sleep
-        #     return
+        if self.combat_model.get_need_to_flee(self.fighting_mobs):
+            logging.info(f"Running away from {self.fighting_mobs}, player: {self.object_manager.player()}")
+            self.flee()
+            return
 
         player = self.object_manager.player()
         self.fighting_machine.active(Relativity.distance(player, target),
@@ -176,18 +179,26 @@ class MobFarmer(StateMachine):
             angle = Relativity.angle(self.object_manager.player(), loot)
             self.looting_machine.active(distance, self._get_coords(loot), angle)
 
+    def _do_fleeing(self):
+        if not len(self.fighting_mobs):
+            self.fled()
+            return
+
+        angle = Relativity.angle(self.object_manager.player(), self.fighting_mobs[0])
+        self.rotation.process(angle, Settings.FLEE_ANGLE_RANGE)
+
+        spell = self.combat_model.get_next_fleeing_spell()
+        if spell and spell.bind_key:
+            self.controller.press(spell.bind_key)
+
     def process(self):
         assert self.object_manager.player().hp()  # crash it when dead for now
 
         self.fighting_mobs = self.mob_picker.fighting()
         self._report()
-        if len(self.fighting_mobs) and not self.is_fighting:
+        if len(self.fighting_mobs) and not self.is_fighting and not self.is_fleeing:
             self.fight()
         else:
-            for phase in ['looting', 'searching', 'fighting']:
-                if phase != self.current_state_value:
-                    getattr(self, f"{phase}_machine").inactive()
-
             getattr(self, f"_do_{self.current_state_value}")()
 
     def on_enter_searching(self):
@@ -210,17 +221,26 @@ class MobFarmer(StateMachine):
         logging.info("Looting")
         self.transition_time = time.time()
 
+    def on_enter_fleeing(self):
+        logging.info("Fleeing")
+        self.rotation = Rotation(self.controller, kiting=True)
+        self.controller.down('w')
+
     def on_exit_searching(self):
-        self.searching_machine = MobSearch(self.controller, self.rotation)
+        self.searching_machine.stop()
 
     def on_exit_fighting(self):
-        self.fighting_machine = CombatAction(self.controller, self.rotation)
+        self.fighting_machine.stop()
 
     def on_exit_restoring(self):
         pass
 
     def on_exit_looting(self):
-        self.looting_machine = MobLooting(self.controller, self.rotation)
+        self.looting_machine.stop()
+
+    def on_exit_fleeing(self):
+        self.rotation = Rotation(self.controller, kiting=False)
+        self.controller.up('w')
 
 
 

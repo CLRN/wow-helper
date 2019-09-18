@@ -26,6 +26,8 @@ class Rotation(StateMachine):
             self.stop_turning()
         elif self.is_facing and math.fabs(degrees) > required_angle:
             logging.debug(f"Rotating to {angle_radians}")
+            angle_radians = angle_radians * -1 if self.is_kiting else angle_radians
+
             if angle_radians > 0:
                 self.turn_left()
             else:

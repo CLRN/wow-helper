@@ -23,9 +23,6 @@ class MobSearch(StateMachine):
         self.last_jump = 0
         self.rotation = rotation
 
-    def inactive(self):
-        self.stop()
-
     def active(self, target_range, target_selected, target_coords, angle):
         self.rotation.process(angle, Settings.SEARCH_ANGLE_RANGE)
         if target_range > Settings.SEARCH_RANGE and not self.is_moving_to:

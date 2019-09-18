@@ -18,14 +18,17 @@ class Model:
         self.player_settings = player_settings
         self.object_manager = object_manager
 
+        self.cat = Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)
+        self.rejuvenation = Spell(REJUVENATION, 0, 100, 0, self.player_settings.rejuvenation(), 0)
+
     def _heal(self, auras):
         player = self.object_manager.player()
         if CAT_FORM in auras:
-            return Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)  # remove cat form
+            return self.cat  # remove cat form
         elif REGROWTH not in auras and (player.hp() * 100) / player.max_hp() < 70:
             return Spell(REGROWTH, 0, 100, 2, self.player_settings.regrowth(), 0)
         elif REJUVENATION not in auras:
-            return Spell(REJUVENATION, 0, 100, 0, self.player_settings.rejuvenation(), 0)
+            return self.rejuvenation
         elif (player.hp() * 100) / player.max_hp() < 70:
             return Spell(0, 0, 100, 3, self.player_settings.healing_touch(), 0)
 
@@ -38,13 +41,13 @@ class Model:
         threshold = Settings.HEAL_IN_COMBAT_THRESHOLD + len(mobs) * 10
 
         # check case when we need to heal in combat
-        if (player.hp() * 100) / player.max_hp() < threshold:
+        if (player.hp() * 100) / player.max_hp() < threshold and (player.power() * 100) / player.max_power() > 40:
             spell = self._heal(auras)
             if spell:
                 return spell
 
         if CAT_FORM not in auras:
-            return Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)
+            return self.cat
 
         if target.hp() == target.max_hp():
             return Spell(RAKE, 2, 4, 0, self.player_settings.rake(), 10)
@@ -66,8 +69,21 @@ class Model:
             return None
 
         if CAT_FORM in auras:
-            return Spell(CAT_FORM, 0, 100, 0, self.player_settings.cat_form(), 0)  # remove cat form
+            return self.cat  # remove cat form
         elif MARK_OF_THE_WILD not in auras:
             return Spell(MARK_OF_THE_WILD, 0, 100, 0, self.player_settings.mark(), 0)
         elif THORNS not in auras:
             return Spell(THORNS, 0, 100, 0, self.player_settings.thorns(), 0)
+
+    def get_need_to_flee(self, mobs):
+        player = self.object_manager.player()
+        hp = (player.hp() * 100) / player.max_hp() < Settings.FLEE_HP_THRESHOLD
+        power = (player.power() * 100) / player.max_power() < Settings.FLEE_POWER_THRESHOLD
+        return len(mobs) > 2 or (len(mobs) > 1 and hp and power)
+
+    def get_next_fleeing_spell(self):
+        auras = self.object_manager.player().auras()
+        if REJUVENATION not in auras:
+            return self.cat if CAT_FORM in auras else self.rejuvenation
+
+        return self.cat if CAT_FORM not in auras else None

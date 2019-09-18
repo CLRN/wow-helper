@@ -29,9 +29,6 @@ class CombatAction(StateMachine):
         self.rotation = rotation
         self.last_jump = 0
 
-    def inactive(self):
-        self.stop()
-
     def active(self, target_range, angle, next_spell, is_casting):
         self.rotation.process(angle)
 

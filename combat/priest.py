@@ -19,3 +19,9 @@ class Model:
 
     def get_next_buff(self):
         return None
+
+    def get_need_to_flee(self, mobs):
+        return False
+
+    def get_next_fleeing_spell(self):
+        return None
