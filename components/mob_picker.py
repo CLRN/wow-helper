@@ -66,7 +66,7 @@ class MobPicker:
                 ordered.pop(0)
             else:
                 break
-        return ordered[0] if len(ordered) else None
+        return ordered[0] if len(ordered) else self.starting_point
 
     def pick_closest(self):
         ordered = self._pick(self._filter_alive)

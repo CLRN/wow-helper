@@ -23,7 +23,7 @@ class MobLooting(StateMachine):
         self.rotation = rotation
         self.last_jump = 0
 
-    def active(self, target_range, target_coords, target_angle):
+    def process(self, target_range, target_coords, target_angle):
         if self.rotation.process(target_angle) and self.is_in_range:
             return
 

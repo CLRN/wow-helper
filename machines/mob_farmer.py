@@ -12,6 +12,7 @@ import time
 import pyautogui
 import os
 import shutil
+import math
 
 
 class MobFarmer(StateMachine):
@@ -119,7 +120,7 @@ class MobFarmer(StateMachine):
         target = self.object_manager.target()
 
         angle = Relativity.angle(self.object_manager.player(), attack)
-        if self.searching_machine.active(distance,
+        if self.searching_machine.process(distance,
                                          target.id() == attack.id() if target else False,
                                          self._get_coords(attack),
                                          angle):
@@ -135,21 +136,27 @@ class MobFarmer(StateMachine):
                 target = self.fighting_mobs[0]
 
         player = self.object_manager.player()
-        incoming_dps = (self.attack_start_hp - player.hp()) / (time.time() - self.attack_start_time)
-        to_die = player.hp() / incoming_dps
+        if player.hp() == player.max_hp():
+            self.attack_start_time = time.time()
+            self.attack_start_hp = player.hp()
+
+        diff = time.time() - self.attack_start_time
+        incoming_dps = (math.fabs(self.attack_start_hp - player.hp()) / diff) if diff > 1 else 0
+        to_die = (player.hp() / incoming_dps) if incoming_dps else 9999
         if time.time() - self.last_incoming_dps_time > 5:
             logging.info(f"Incoming DPS: {incoming_dps}, to die: {to_die}, mobs: {len(self.fighting_mobs)}")
             self.last_incoming_dps_time = time.time()
 
-        if self.combat_model.get_need_to_flee(self.fighting_mobs) or to_die < Settings.FLEE_SECONDS_TO_DIE_THRESHOLD:
-            logging.info(f"Running away from {self.fighting_mobs}, player: {self.object_manager.player()}")
+        if self.combat_model.get_need_to_flee(self.fighting_mobs) or (incoming_dps > 0 and to_die < Settings.FLEE_SECONDS_TO_DIE_THRESHOLD):
+            logging.info(f"Running away from {self.fighting_mobs}, "
+                         f"incoming DPS: {incoming_dps}, to die: {to_die}, player: {self.object_manager.player()}")
             self.flee()
             return
 
-        self.fighting_machine.active(Relativity.distance(player, target),
-                                     Relativity.angle(self.object_manager.player(), target),
-                                     self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
-                                     player.spell())
+        self.fighting_machine.process(Relativity.distance(player, target),
+                                      Relativity.angle(self.object_manager.player(), target),
+                                      self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
+                                      player.spell())
 
     def _do_restoring(self):
         # TODO: move to a separate state machine
@@ -190,7 +197,7 @@ class MobFarmer(StateMachine):
         elif loot:
             distance = Relativity.distance(self.object_manager.player(), loot)
             angle = Relativity.angle(self.object_manager.player(), loot)
-            self.looting_machine.active(distance, self._get_coords(loot), angle)
+            self.looting_machine.process(distance, self._get_coords(loot), angle)
 
     def _do_fleeing(self):
         if not len(self.fighting_mobs):

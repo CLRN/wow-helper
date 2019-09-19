@@ -94,9 +94,13 @@ if __name__ == '__main__':
                                telegram_bot=telegram)
 
             while True:
-                manager.update()
-                farmer.process()
-                locator.track(manager.player().x(), manager.player().y())
+                try:
+                    manager.update()
+                    farmer.process()
+                    locator.track(manager.player().x(), manager.player().y())
+                except:
+                    logging.exception("Main loop failed")
+                    raise
 
 
 

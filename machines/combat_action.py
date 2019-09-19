@@ -29,7 +29,7 @@ class CombatAction(StateMachine):
         self.rotation = rotation
         self.last_jump = 0
 
-    def active(self, target_range, angle, next_spell, is_casting):
+    def process(self, target_range, angle, next_spell, is_casting):
         self.rotation.process(angle)
 
         previous_spell = self.spell
