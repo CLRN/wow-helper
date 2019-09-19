@@ -13,8 +13,11 @@ def test_moving_starts():
 
     machine.process(Position(0, 0, 0), Position(10, 10, 0), 5)
     assert machine.is_moving
-
     controller.down.assert_called_once_with('w')
+
+    machine.process(Position(0, 0, 0), Position(2, 2, 0), 5)
+    assert machine.is_staying
+    controller.up.assert_called_once_with('w')
 
 
 def test_moving_sticks():
@@ -46,3 +49,16 @@ def test_moving_sticks():
         getattr(controller, method).assert_has_calls(args)
 
 
+def test_moving_kite():
+    controller = Mock()
+
+    machine = Moving(controller, kiting=True)
+    assert machine.is_staying
+
+    machine.process(Position(0, 0), Position(0, 1), 30)
+    assert machine.is_moving
+    controller.down.assert_called_once_with('w')
+
+    machine.process(Position(0, 0), Position(50, 50), 30)
+    assert machine.is_staying
+    controller.up.assert_called_once_with('w')

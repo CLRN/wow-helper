@@ -16,9 +16,12 @@ class Moving(StateMachine):
     stop = sticking.to(staying) | moving.to(staying) | staying.to(staying)
     stuck = moving.to(sticking)
 
-    def __init__(self, controller):
+    def __init__(self, controller, kiting=False):
         self.controller = controller
+        self.is_kiting = kiting
+
         StateMachine.__init__(self)
+
         self.last_check_time = 0
         self.last_jump = 0
         self.last_positions = list()
@@ -27,10 +30,12 @@ class Moving(StateMachine):
 
     def process(self, position, target, required_range):
         distance = Relativity.distance(position, target)
-        if self.is_staying and distance > required_range:
+        diff = required_range - distance if self.is_kiting else distance - required_range
+
+        if self.is_staying and diff > 0:
             self.move()
         elif self.is_moving:
-            if distance < required_range:
+            if diff < 0:
                 self.stop()
                 return
 
