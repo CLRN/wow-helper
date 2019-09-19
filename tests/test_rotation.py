@@ -3,7 +3,7 @@ import math
 from unittest.mock import Mock, call
 
 
-def test_init_facing():
+def test_rotation_init_facing():
     controller = Mock()
 
     machine = Rotation(controller)
@@ -14,7 +14,7 @@ def test_init_facing():
     controller.assert_not_called()
 
 
-def test_init_not_facing_left():
+def test_rotation_init_not_facing_left():
     controller = Mock()
 
     machine = Rotation(controller)
@@ -25,7 +25,7 @@ def test_init_not_facing_left():
     controller.down.assert_called_once_with('a')
 
 
-def test_init_not_facing_right():
+def test_rotation_init_not_facing_right():
     controller = Mock()
 
     machine = Rotation(controller)
@@ -36,7 +36,7 @@ def test_init_not_facing_right():
     controller.down.assert_called_once_with('d')
 
 
-def test_full_rotation():
+def test_rotation_full_rotation():
     controller = Mock()
 
     machine = Rotation(controller)
@@ -62,10 +62,11 @@ def test_full_rotation():
     controller.up.assert_has_calls(calls)
 
 
-def test_init_kiting():
+def test_rotation_init_kiting():
     controller = Mock()
 
-    machine = Rotation(controller, kiting=True)
+    machine = Rotation(controller)
+    machine.is_kiting = True
     machine.process(math.radians(10))
 
     assert machine.is_right

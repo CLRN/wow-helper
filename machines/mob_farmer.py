@@ -201,6 +201,7 @@ class MobFarmer(StateMachine):
 
         angle = Relativity.angle(self.object_manager.player(), self.fighting_mobs[0])
         self.rotation_machine.process(angle, Settings.FLEE_ANGLE_RANGE)
+        self.moving_machine.process(self.object_manager.player(), self.fighting_mobs[0], 100)
 
         spell = self.combat_model.get_next_fleeing_spell()
         if spell and spell.bind_key:
@@ -240,15 +241,15 @@ class MobFarmer(StateMachine):
 
     def on_enter_fleeing(self):
         logging.info("Fleeing")
-        self.rotation_machine = Rotation(self.controller, kiting=True)
-        self.controller.down('w')
+        self.rotation_machine.is_kiting = True
+        self.moving_machine.is_kiting = True
 
     def on_exit_fighting(self):
         self.fighting_machine.stop()
 
     def on_exit_fleeing(self):
-        self.rotation_machine = Rotation(self.controller, kiting=False)
-        self.controller.up('w')
+        self.rotation_machine.is_kiting = False
+        self.moving_machine.is_kiting = False
 
 
 

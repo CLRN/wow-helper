@@ -1,6 +1,8 @@
 from statemachine import StateMachine, State
 from components.settings import Settings
+from components.position import Position
 from algos.relativity import Relativity
+
 
 import time
 import logging
@@ -16,9 +18,9 @@ class Moving(StateMachine):
     stop = sticking.to(staying) | moving.to(staying) | staying.to(staying)
     stuck = moving.to(sticking)
 
-    def __init__(self, controller, kiting=False):
+    def __init__(self, controller):
         self.controller = controller
-        self.is_kiting = kiting
+        self.is_kiting = False
 
         StateMachine.__init__(self)
 
@@ -31,6 +33,7 @@ class Moving(StateMachine):
     def process(self, position, target, required_range):
         distance = Relativity.distance(position, target)
         diff = required_range - distance if self.is_kiting else distance - required_range
+        target_pos = Position(target.x(), target.y())
 
         if self.is_staying and diff > 0:
             self.move()
@@ -47,7 +50,7 @@ class Moving(StateMachine):
 
             self.last_check_time = now
 
-            self.last_positions.append(position)
+            self.last_positions.append(Position(position.x(), position.y()))
             if len(self.last_positions) > 10:
                 self.last_positions.pop(0)
             if len(self.last_positions) < 2:
@@ -60,13 +63,13 @@ class Moving(StateMachine):
                     self.controller.press('space')
                 else:
                     logging.warning(f"We got stuck, jump didn't help. Last positions: {self.last_positions}")
-                    self.last_target_stuck = target
+                    self.last_target_stuck = target_pos
                     self.stuck()
             elif time.time() - self.last_jump > self.jump_interval:
                 self.controller.press('space')
                 self.last_jump = time.time()
                 self.jump_interval = random.randint(5, 10)
-        elif self.is_sticking and self.last_target_stuck != target:
+        elif self.is_sticking and self.last_target_stuck != target_pos:
             logging.info(f"Unstuck with new target: {target}")
             self.move()
 

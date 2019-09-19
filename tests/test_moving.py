@@ -52,7 +52,8 @@ def test_moving_sticks():
 def test_moving_kite():
     controller = Mock()
 
-    machine = Moving(controller, kiting=True)
+    machine = Moving(controller)
+    machine.is_kiting = True
     assert machine.is_staying
 
     machine.process(Position(0, 0), Position(0, 1), 30)

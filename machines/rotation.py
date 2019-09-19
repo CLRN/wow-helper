@@ -14,9 +14,9 @@ class Rotation(StateMachine):
     turn_left = facing.to(left)
     stop_turning = left.to(facing) | right.to(facing) | facing.to(facing)
 
-    def __init__(self, controller, kiting=False):
+    def __init__(self, controller):
         self.controller = controller
-        self.is_kiting = kiting
+        self.is_kiting = False
         StateMachine.__init__(self)
 
     def process(self, angle_radians, required_angle=Settings.ATTACK_ANGLE_RANGE):
