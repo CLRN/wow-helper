@@ -12,7 +12,10 @@ for x in range(100):
 
 t = KDTree(points)
 
-distance, location = t.query([1152.3, 35.7], k=1, distance_upper_bound=10)
+distance, location = t.query([11.3, 35.7], k=5, distance_upper_bound=10)
+for l in location:
+    print(points[l])
+
 
 print(distance, t.data[location])
 

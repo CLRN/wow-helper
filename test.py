@@ -96,6 +96,7 @@ if __name__ == '__main__':
             while True:
                 try:
                     manager.update()
+                    picker.update()
                     farmer.process()
                     locator.track(manager.player().x(), manager.player().y())
                 except:

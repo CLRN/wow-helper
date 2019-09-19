@@ -1,6 +1,7 @@
 from constants.enums import ObjectType
 from algos.relativity import Relativity
 from components.settings import Settings
+from scipy.spatial.kdtree import KDTree
 
 import math
 
@@ -12,6 +13,18 @@ class MobPicker:
         self.manager = manager
         self.starting_point = starting_point
         self.level = self.manager.player().level()
+
+        self.alive_mobs = list()
+        self.alive_mobs_tree = None
+
+    def update(self):
+        # load all mobs to a quad tree
+        points = list()
+        self.alive_mobs = filter(self._filter_alive, self.manager.objects())
+        for mob in self.alive_mobs:
+            points.append([mob.x(), mob.y()])
+
+        self.alive_mobs_tree = KDTree(points)
 
     def _filter_alive(self, mob):
         if mob.target():
@@ -50,23 +63,21 @@ class MobPicker:
         return sorted(mobs, key=lambda x: Relativity.distance(player, x))
 
     def pick_alive(self):
-        to_starting_point = Relativity.distance(self.manager.player(), self.starting_point)
+        player = self.manager.player()
+        to_starting_point = Relativity.distance(player, self.starting_point)
         if to_starting_point > Settings.FARMING_RANGE:
             return self.starting_point
-        elif to_starting_point > Settings.FARMING_RANGE / 2:
-            ordered = self._pick(self._filter_alive)
-            ordered = sorted(ordered, key=lambda x: Relativity.distance(self.starting_point, x))
-        else:
-            ordered = self._pick(self._filter_alive)
 
-        while len(ordered):
-            # check proximity for nearby mobs
-            mob = ordered[0]
-            if self._count_proximity(mob, Settings.MOB_GROUP_PROXIMITY_RANGE) + 1 >= Settings.MOB_GROUP_PROXIMITY_COUNT:
-                ordered.pop(0)
-            else:
-                break
-        return ordered[0] if len(ordered) else self.starting_point
+        distance, location = self.alive_mobs_tree.query([player.x(), player.y()], k=5)
+        for mob_id in location:
+            group, _ = self.alive_mobs_tree.query([self.alive_mobs[mob_id].x(), self.alive_mobs[mob_id].y()],
+                                                  distance_upper_bound=Settings.MOB_GROUP_PROXIMITY_RANGE,
+                                                  k=Settings.MOB_GROUP_PROXIMITY_COUNT)
+            nearby = [x for x in filter(lambda x: x != math.inf, group)]
+            if len(nearby) + 1 < Settings.MOB_GROUP_PROXIMITY_COUNT:
+                return self.alive_mobs[mob_id]
+
+        return self.starting_point
 
     def pick_closest(self):
         ordered = self._pick(self._filter_alive)
