@@ -46,7 +46,7 @@ class MobFarmer(StateMachine):
         self.rotation_machine = Rotation(controller)
         self.moving_machine = Moving(controller)
         self.looting_machine = MobLooting(self.controller, self.rotation_machine, self.moving_machine)
-        self.searching_machine = MobSearch(self.controller, self.rotation_machine)
+        self.searching_machine = MobSearch(self.controller, self.rotation_machine, self.moving_machine)
         self.fighting_machine = CombatAction(self.controller, self.rotation_machine, self.moving_machine)
 
         self.fighting_mobs = None
@@ -118,14 +118,9 @@ class MobFarmer(StateMachine):
             self.controller.press(buf_to_cast.bind_key)
             return
 
-        distance = Relativity.distance(self.object_manager.player(), attack)
-        target = self.object_manager.target()
-
-        angle = Relativity.angle(self.object_manager.player(), attack)
-        if self.searching_machine.process(distance,
-                                          target.id() == attack.id() if target else False,
-                                          self._get_coords(attack),
-                                          angle):
+        if self.searching_machine.process(self.object_manager.player(),
+                                          self.object_manager.target(),
+                                          self._get_coords(attack)):
             self.found()
 
     def _do_fighting(self):
@@ -247,9 +242,6 @@ class MobFarmer(StateMachine):
         logging.info("Fleeing")
         self.rotation_machine = Rotation(self.controller, kiting=True)
         self.controller.down('w')
-
-    def on_exit_searching(self):
-        self.searching_machine.stop()
 
     def on_exit_fighting(self):
         self.fighting_machine.stop()
