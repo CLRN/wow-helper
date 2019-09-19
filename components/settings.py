@@ -35,3 +35,6 @@ class Settings:
 
     FRIENDLY_FACTIONS = [83]  # read from db
 
+    STUCK_CHECK_INTERVAL = 2
+    STUCK_CHECK_RANGE = 3
+

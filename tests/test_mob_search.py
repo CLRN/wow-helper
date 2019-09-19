@@ -5,10 +5,11 @@ from unittest.mock import Mock, call
 
 def test_search_simple():
     controller = Mock()
+    rotation = Mock()
 
     calls = {"up": list(), "down": list(), "press": list()}
 
-    machine = MobSearch(controller)
+    machine = MobSearch(controller, rotation)
     assert machine.is_in_range
 
     machine.process(40, False, (100, 200), 0)

@@ -68,6 +68,6 @@ def test_init_kiting():
     machine = Rotation(controller, kiting=True)
     machine.process(math.radians(10))
 
-    assert machine.is_left
+    assert machine.is_right
 
-    controller.down.assert_called_once_with('a')
+    controller.down.assert_called_once_with('d')

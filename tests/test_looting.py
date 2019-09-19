@@ -5,11 +5,17 @@ from unittest.mock import Mock, call
 
 def test_looting_simple():
     controller = Mock()
+    rotation = Mock()
 
     calls = {"up": list(), "down": list(), "press": list()}
 
-    machine = MobLooting(controller)
+    machine = MobLooting(controller, rotation)
     assert machine.is_in_range
+
+    machine.process(40, (100, 100), 0)
+    assert machine.is_in_range
+
+    rotation.process.side_effect = lambda x: False
 
     machine.process(40, (100, 100), 0)
     assert machine.is_moving_to

@@ -9,10 +9,11 @@ smite_spell = Spell(0, 2, 25, 2, '2', 0)
 
 def test_smite_simple():
     controller = Mock()
+    rotation = Mock()
 
     calls = {"up": list(), "down": list(), "press": list()}
 
-    machine = CombatAction(controller)
+    machine = CombatAction(controller, rotation)
     assert machine.is_in_range
 
     machine.process(30, 0, smite_spell, False)
@@ -51,10 +52,11 @@ def test_smite_simple():
 
 def test_melee_simple():
     controller = Mock()
+    rotation = Mock()
 
     calls = {"up": list(), "down": list(), "press": list()}
 
-    machine = CombatAction(controller)
+    machine = CombatAction(controller, rotation)
     assert machine.is_in_range
 
     machine.process(30, 0, attack_spell, False)
