@@ -47,7 +47,7 @@ class MobFarmer(StateMachine):
         self.moving_machine = Moving(controller)
         self.looting_machine = MobLooting(self.controller, self.rotation_machine, self.moving_machine)
         self.searching_machine = MobSearch(self.controller, self.rotation_machine)
-        self.fighting_machine = CombatAction(self.controller, self.rotation_machine)
+        self.fighting_machine = CombatAction(self.controller, self.rotation_machine, self.moving_machine)
 
         self.fighting_mobs = None
         self.transition_time = time.time()
@@ -155,8 +155,8 @@ class MobFarmer(StateMachine):
             self.flee()
             return
 
-        self.fighting_machine.process(Relativity.distance(player, target),
-                                      Relativity.angle(self.object_manager.player(), target),
+        self.fighting_machine.process(player,
+                                      target,
                                       self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
                                       player.spell())
 
