@@ -1,48 +1,20 @@
-from statemachine import StateMachine, State
-from machines.rotation import Rotation
 from components.settings import Settings
+from algos.relativity import Relativity
 import logging
-import time
-import random
 
 
-class MobLooting(StateMachine):
-    out_of_range = State('Standing out of range')
-    moving_to = State('Moving in range distance')
-    in_range = State('Mob in range to select', initial=True)
-    looted = State('Looted target')
-
-    move_closer = out_of_range.to(moving_to) | in_range.to(moving_to) | looted.to(moving_to)
-    stop = moving_to.to(in_range) | in_range.to(in_range) | looted.to(in_range) | out_of_range.to(in_range)
-    loot = in_range.to(looted)
-
-    def __init__(self, controller, rotation):
+class MobLooting:
+    def __init__(self, controller, rotation, moving):
         self.controller = controller
-        StateMachine.__init__(self)
-        self.last_looting_time = 0
         self.rotation = rotation
-        self.last_jump = 0
+        self.moving = moving
 
-    def process(self, target_range, target_coords, target_angle):
-        if self.rotation.process(target_angle) and self.is_in_range:
+    def process(self, player, target, target_coords):
+        angle = Relativity.angle(player, target)
+        if self.rotation.process(angle) and self.moving.is_staying:
             return
 
-        if target_range > Settings.LOOTING_RANGE and not self.is_moving_to:
-            self.move_closer()
-        elif target_range < Settings.LOOTING_RANGE and self.is_moving_to:
-            self.stop()
-        elif self.is_in_range and target_coords:
-            logging.debug(f"Looting target. range: {target_range}, coords: {target_coords}")
+        self.moving.process(player, target, Settings.LOOTING_RANGE)
+        if self.moving.is_staying and target_coords:
+            logging.debug(f"Looting target, coords: {target_coords}")
             self.controller.click(target_coords[0], target_coords[1])
-            self.last_looting_time = time.time()
-        elif self.is_moving_to and time.time() - self.last_jump > random.randint(5, 10):
-            self.controller.press('space')
-            self.last_jump = time.time()
-
-    def on_enter_moving_to(self):
-        logging.debug("Starting moving closer")
-        self.controller.down('w')
-
-    def on_exit_moving_to(self):
-        logging.debug("Stopping moving closer")
-        self.controller.up('w')

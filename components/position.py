@@ -1,6 +1,6 @@
 
 class Position:
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z=None):
         self.px = x
         self.py = y
         self.pz = z
