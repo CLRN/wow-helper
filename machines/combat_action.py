@@ -20,7 +20,7 @@ class CombatAction(StateMachine):
         self.rotation = rotation
         self.moving = moving
 
-    def process(self, player, target, next_spell, is_casting):
+    def process(self, player, target, next_spell, is_casting, path):
         self.rotation.process(Relativity.angle(player, target))
 
         previous_spell = self.spell
@@ -36,7 +36,7 @@ class CombatAction(StateMachine):
             self.casting_finished()
             return
 
-        self.moving.process(player, target, self.spell.max_range)
+        self.moving.process(player, target, self.spell.max_range, path)
         if self.moving.is_staying:
             if previous_spell and previous_spell.bind_key != self.spell.bind_key:
                 logging.info(f"Casting spell {self.spell.bind_key}")

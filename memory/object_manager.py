@@ -52,6 +52,7 @@ class ObjectManager:
         self.process.invalidate_cache()
         self._objects = dict()
 
+        counter = 0
         for offset in self._offsets():
             obj_type = self.process.byte(offset + ObjectOffsets.ObjType)
             if obj_type not in self._object_types:
@@ -60,8 +61,14 @@ class ObjectManager:
             obj = self._object_types[obj_type](self.process, offset)
             self._objects[obj.id()] = obj
 
+            if counter > 1000:
+                break
+
     def object(self, obj_id):
         return self._objects[obj_id]
+
+    def has_object(self, obj_id):
+        return obj_id in self._objects
 
     def objects(self):
         return self._objects.values()

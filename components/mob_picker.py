@@ -9,8 +9,9 @@ import logging
 
 
 class MobPicker:
-    def __init__(self, manager, starting_point):
+    def __init__(self, manager, locator, starting_point):
         self.manager = manager
+        self.locator = locator
         self.starting_point = starting_point
         self.level = self.manager.player().level()
 
@@ -20,11 +21,11 @@ class MobPicker:
     def update(self):
         # load all mobs to a quad tree
         points = list()
-        self.alive_mobs = filter(self._filter_alive, self.manager.objects())
+        self.alive_mobs = [x for x in filter(self._filter_alive, self.manager.objects())]
         for mob in self.alive_mobs:
             points.append([mob.x(), mob.y()])
 
-        self.alive_mobs_tree = KDTree(points)
+        self.alive_mobs_tree = KDTree(points) if len(points) else None
 
     def _filter_alive(self, mob):
         if mob.target():
@@ -62,11 +63,23 @@ class MobPicker:
         mobs = filter(filter_func, self.manager.objects())
         return sorted(mobs, key=lambda x: Relativity.distance(player, x))
 
-    def pick_alive(self):
+    def _calc_route(self, target, known_path_only):
+        player = self.manager.player()
+        if known_path_only:
+            logging.info(f"Building known route")
+            return target, self.locator.known_route(player.x(), player.y(), target.x(), target.y())
+        else:
+            return target, Relativity.direct_route(player, target)
+
+    def pick_alive(self, known_path_only):
+        if not self.alive_mobs_tree:
+            return self._calc_route(self.starting_point, known_path_only)
+
         player = self.manager.player()
         to_starting_point = Relativity.distance(player, self.starting_point)
         if to_starting_point > Settings.FARMING_RANGE:
-            return self.starting_point
+            logging.info(f"Returning to start location: {self.starting_point}")
+            return self._calc_route(self.starting_point, known_path_only)
 
         distance, location = self.alive_mobs_tree.query([player.x(), player.y()], k=5)
         for mob_id in location:
@@ -75,17 +88,23 @@ class MobPicker:
                                                   k=Settings.MOB_GROUP_PROXIMITY_COUNT)
             nearby = [x for x in filter(lambda x: x != math.inf, group)]
             if len(nearby) + 1 < Settings.MOB_GROUP_PROXIMITY_COUNT:
-                return self.alive_mobs[mob_id]
+                logging.info(f"Returning direct path to mob: {self.alive_mobs[mob_id]}")
+                return self._calc_route(self.alive_mobs[mob_id], known_path_only)
 
-        return self.starting_point
+        logging.info(f"No mobs nearby, going to start location: {self.starting_point}")
+        return self._calc_route(self.starting_point, known_path_only)
 
     def pick_closest(self):
         ordered = self._pick(self._filter_alive)
         return ordered[0] if len(ordered) else None
 
-    def pick_lootable(self):
+    def pick_lootable(self, known_path_only):
         ordered = self._pick(self._filter_lootable)
-        return ordered[0] if len(ordered) else None
+        return self._calc_route(ordered[0], known_path_only) if len(ordered) else (None, [])
+
+    def path_to_target(self, known_path_only):
+        target = self.manager.target()
+        return self._calc_route(target, known_path_only) if target else (None, [])
 
     def fighting(self):
         player_id = self.manager.player().id()

@@ -57,23 +57,32 @@ class MobFarmer(StateMachine):
         self.attack_start_hp = 0
         self.last_incoming_dps_time = 0
 
+        self.loot_target = None
+        self.loot_target_path = list()
+
+        self.attack_target = None
+        self.attack_target_path = list()
+
+        self.last_target_path = list()
+
         StateMachine.__init__(self)
 
         if os.path.exists('screens'):
             shutil.rmtree('screens')
         os.makedirs('screens')
 
-    def _pick_attack_or_loot(self):
-        loot = self.mob_picker.pick_lootable()
-        distance_to_loot = Relativity.distance(self.object_manager.player(), loot) if loot else 9999
-        closest = self.mob_picker.pick_closest()
-        target = self.mob_picker.pick_alive()
+    def _update_paths(self):
+        self.loot_target, self.loot_target_path = self.mob_picker.pick_lootable(self.moving_machine.is_sticking)
+        self.attack_target, self.attack_target_path = self.mob_picker.pick_alive(self.moving_machine.is_sticking)
 
-        if closest and Relativity.distance(self.object_manager.player(), closest) < distance_to_loot:
-            loot = None
+    def _attack_or_loot(self):
+        distance_to_loot = Relativity.distance(self.object_manager.player(), self.loot_target) if self.loot_target else 9999
+        closest = self.mob_picker.pick_closest()
+
+        if not self.loot_target or closest and Relativity.distance(self.object_manager.player(), closest) < distance_to_loot:
+            return True, False
         else:
-            target = None
-        return target, loot
+            return False, True
 
     def _report(self):
         if time.time() - self.last_report_time < Settings.REPORTING_TIME:
@@ -101,26 +110,29 @@ class MobFarmer(StateMachine):
         return world_to_screen(self.object_manager.process, self.window, unit.x(), unit.y(), unit.z())
 
     def _do_searching(self):
-        attack, loot = self._pick_attack_or_loot()
-        if not attack and loot:
+        to_attack, to_loot = self._attack_or_loot()
+        if to_loot:
             self.loot()
             return
 
-        if not attack:
+        if not self.attack_target:
+            self._update_paths()
             return
 
-        if not self.last_attack_target or self.last_attack_target.id() != attack.id():
-            self.last_attack_target = attack
-            logging.info(f"Found new target to farm: {attack}")
+        if not self.last_attack_target or self.last_attack_target.id() != self.attack_target.id():
+            self.last_attack_target = self.attack_target
+            logging.info(f"Found new target to farm: {self.attack_target}")
 
         buf_to_cast = self.combat_model.get_next_buff()
         if buf_to_cast:
             self.controller.press(buf_to_cast.bind_key)
             return
 
-        if self.searching_machine.process(self.object_manager.player(),
-                                          self.object_manager.target(),
-                                          self._get_coords(attack)):
+        if self.searching_machine.process(player=self.object_manager.player(),
+                                          found_mob=self.attack_target,
+                                          target=self.object_manager.target(),
+                                          target_coords=self._get_coords(self.attack_target),
+                                          path=self.attack_target_path):
             self.found()
 
     def _do_fighting(self):
@@ -131,6 +143,9 @@ class MobFarmer(StateMachine):
                 return
             else:
                 target = self.fighting_mobs[0]
+
+        if not len(self.last_target_path) and (self.object_manager.target() or self.moving_machine.is_sticking):
+            _, self.last_target_path = self.mob_picker.path_to_target(self.moving_machine.is_sticking)
 
         player = self.object_manager.player()
         if player.hp() == player.max_hp():
@@ -150,10 +165,11 @@ class MobFarmer(StateMachine):
             self.flee()
             return
 
-        self.fighting_machine.process(player,
-                                      target,
-                                      self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
-                                      player.spell())
+        self.fighting_machine.process(player=player,
+                                      target=target,
+                                      next_spell=self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
+                                      is_casting=player.spell(),
+                                      path=self.last_target_path)
 
     def _do_restoring(self):
         # TODO: move to a separate state machine
@@ -180,19 +196,23 @@ class MobFarmer(StateMachine):
             self.restored()
 
     def _do_looting(self):
-        attack, loot = self._pick_attack_or_loot()
-        if attack and loot:
-            self.looted()
-            return
-
         if time.time() - self.transition_time < Settings.LOOT_ACTION_DELAY_SECONDS:
             return
 
         player = self.object_manager.player()
-        if not loot or (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
+        if player.spell():
+            return  # already looting
+
+        to_attack, _ = self._attack_or_loot()
+        if to_attack or not self.loot_target or (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD\
+           or not self.object_manager.has_object(self.loot_target.id()):
             self.looted()
-        elif loot:
-            self.looting_machine.process(player, loot, self._get_coords(loot))
+            return
+
+        self.looting_machine.process(player=player,
+                                     target=self.loot_target,
+                                     target_coords=self._get_coords(self.loot_target),
+                                     path=self.loot_target_path)
 
     def _do_fleeing(self):
         if not len(self.fighting_mobs):
@@ -201,7 +221,9 @@ class MobFarmer(StateMachine):
 
         angle = Relativity.angle(self.object_manager.player(), self.fighting_mobs[0])
         self.rotation_machine.process(angle, Settings.FLEE_ANGLE_RANGE)
-        self.moving_machine.process(self.object_manager.player(), self.fighting_mobs[0], 100)
+
+        # TODO: calculate fleeing path
+        self.moving_machine.process(self.object_manager.player(), self.fighting_mobs[0], 100, [])
 
         spell = self.combat_model.get_next_fleeing_spell()
         if spell and spell.bind_key:
@@ -219,13 +241,16 @@ class MobFarmer(StateMachine):
 
     def on_enter_searching(self):
         logging.info("Searching")
+        self._update_paths()
         self.transition_time = time.time()
 
     def on_enter_fighting(self):
         logging.info(f"Fighting: {self.object_manager.objects()}")
+        self._update_paths()
         self.transition_time = time.time()
         self.attack_start_time = time.time()
         self.attack_start_hp = self.object_manager.player().hp()
+        self.last_target_path = list()
 
     def on_enter_restoring(self):
         logging.info("Restoring")
@@ -236,6 +261,7 @@ class MobFarmer(StateMachine):
         self.transition_time = time.time()
 
     def on_enter_looting(self):
+        self._update_paths()
         logging.info("Looting")
         self.transition_time = time.time()
 
@@ -250,8 +276,3 @@ class MobFarmer(StateMachine):
     def on_exit_fleeing(self):
         self.rotation_machine.is_kiting = False
         self.moving_machine.is_kiting = False
-
-
-
-
-

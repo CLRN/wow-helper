@@ -79,11 +79,13 @@ if __name__ == '__main__':
         #     time.sleep(0.3)
         #     make_dump(target)
 
-    module = importlib.import_module(f'players.{manager.player_name.lower()}')
+    # name = manager.player_name.lower()
+    name = 'Clrn'.lower()
+    module = importlib.import_module(f'players.{name}')
     settings = getattr(module, 'PlayerSettings')()
     combat_model = settings.model(settings, manager)
-    picker = MobPicker(manager, manager.player().position())
     locator = Locator()
+    picker = MobPicker(manager, locator, manager.player().position())
     with Bot() as telegram:
         with Controller(window) as controller:
             farmer = MobFarmer(window=window,
