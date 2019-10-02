@@ -7,6 +7,7 @@ from machines.mob_search import MobSearch
 from machines.combat_action import CombatAction
 from machines.moving import Moving
 from memory.camera import world_to_screen
+from PIL import Image, ImageDraw
 
 import logging
 import time
@@ -75,6 +76,10 @@ class MobFarmer(StateMachine):
         self.loot_target, self.loot_target_path = self.mob_picker.pick_lootable(self.moving_machine.is_sticking)
         self.attack_target, self.attack_target_path = self.mob_picker.pick_alive(self.moving_machine.is_sticking)
 
+        if self.attack_target:
+            logging.info(f"Attack target: {self.attack_target}, path: {self.attack_target_path}")
+            self._report()
+
     def _attack_or_loot(self):
         distance_to_loot = Relativity.distance(self.object_manager.player(), self.loot_target) if self.loot_target else 9999
         closest = self.mob_picker.pick_closest()
@@ -84,8 +89,8 @@ class MobFarmer(StateMachine):
         else:
             return False, True
 
-    def _report(self):
-        if time.time() - self.last_report_time < Settings.REPORTING_TIME:
+    def _report(self, force=False):
+        if not force and time.time() - self.last_report_time < Settings.REPORTING_TIME:
             return
 
         self.last_report_time = time.time()
@@ -100,6 +105,25 @@ class MobFarmer(StateMachine):
         screen.save(name)
 
         player = self.object_manager.player()
+
+        if self.attack_target:
+            coords = list()
+
+            im = Image.open(name)
+            d = ImageDraw.Draw(im)
+
+            for point in [player] + self.attack_target_path + [self.attack_target]:
+                on_screen = self._get_coords(point)
+                if on_screen:
+                    x = on_screen[0] - rect.left_top[0]
+                    y = on_screen[1] - rect.left_top[1]
+                    coords.append((x, y))
+                # coords.append(self.window.client_to_screen(on_screen[0], on_screen[1]))
+
+            line_color = (0, 0, 255)
+            d.line(coords, fill=line_color, width=2)
+            im.save(name)
+
         logging.info(f"{self.current_state_value}, player: {player}, target: {player.target()}, "
                      f"mobs: {self.fighting_mobs}")
 
@@ -122,6 +146,7 @@ class MobFarmer(StateMachine):
         if not self.last_attack_target or self.last_attack_target.id() != self.attack_target.id():
             self.last_attack_target = self.attack_target
             logging.info(f"Found new target to farm: {self.attack_target}")
+            self._report(force=True)
 
         buf_to_cast = self.combat_model.get_next_buff()
         if buf_to_cast:
@@ -204,8 +229,8 @@ class MobFarmer(StateMachine):
             return  # already looting
 
         to_attack, _ = self._attack_or_loot()
-        if to_attack or not self.loot_target or (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD\
-           or not self.object_manager.has_object(self.loot_target.id()):
+        is_loot_good = self.loot_target and (self.loot_target.loot() or self.loot_target.skin()) and self.object_manager.has_object(self.loot_target.id())
+        if to_attack or not is_loot_good or (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
             self.looted()
             return
 
@@ -232,7 +257,7 @@ class MobFarmer(StateMachine):
     def process(self):
         assert self.object_manager.player().hp()  # crash it when dead for now
 
-        self.fighting_mobs = self.mob_picker.fighting()
+        self.fighting_mobs = self.mob_picker.fighting_mobs()
         self._report()
         if len(self.fighting_mobs) and not self.is_fighting and not self.is_fleeing:
             self.fight()

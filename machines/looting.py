@@ -14,7 +14,7 @@ class MobLooting:
         if self.rotation.process(angle) and self.moving.is_staying:
             return
 
-        self.moving.process(player, target, Settings.LOOTING_RANGE, path)
+        self.moving.process(player, target, Settings.LOOTING_RANGE)
         if self.moving.is_staying and target_coords:
             logging.debug(f"Looting target, coords: {target_coords}")
             self.controller.click(target_coords[0], target_coords[1])

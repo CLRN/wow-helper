@@ -6,13 +6,13 @@ class Position:
         self.pz = z
 
     def __str__(self):
-        return f"{self.x(), self.y()}"
+        return f"{self.x(), self.y(), self.z()}"
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
-        return self.x() == other.x() and self.y() == other.y()
+        return self.x() == other.x() and self.y() == other.y() and self.z() == other.z()
 
     def x(self):
         return self.px
@@ -21,7 +21,7 @@ class Position:
         return self.py
 
     def z(self):
-        return None
+        return self.pz
 
     def r(self):
         return 0

@@ -1,73 +1,70 @@
 import _recast as dt
+from components.position import Position
+
+SIZE_OF_GRIDS = 533.33333
 
 
-def test_sample_tile_mesh():
-    print("Create NavMesh Object From File")
-    nav_mesh = dt.dtLoadSampleTileMesh(r"c:\wow\maps_2.4.3\built\all_tiles_navmesh.bin")
-    filter = dt.dtQueryFilter()
-    query = dt.dtNavMeshQuery()
+class PathBuilder:
+    def __init__(self, map_id=1):
+        self.map_id = map_id
+        self.maps = dt.MMapManager("f:\\tmp\\wow_3.3.5\\")
+        self.filter = dt.dtQueryFilter()
+        self.query = dt.dtNavMeshQuery()
+        self.poly_pick_ext = dt.dtVec3(7.0, 7.0, 7.0)
+        self.loaded_tiles = list()
+        self.nav_mesh = None
 
-    print("Init NavMesh Object")
-    status = query.init(nav_mesh, 2048)
-    if dt.dtStatusFailed(status):
-        return -1, status
+    def _create_mesh(self):
+        if self.nav_mesh:
+            return
 
-    print("Fix The Input Data")
-    polyPickExt = dt.dtVec3(7.0, 7.0, 7.0)
-    startPos = dt.dtVec3(2320.594482421875, -2527.936279296875, 101.45013427734375)
-    endPos = dt.dtVec3(2300.594482421875, -2547.936279296875, 101.45013427734375)
+        self.nav_mesh = self.maps.mesh(self.map_id)
+        if dt.dtStatusFailed(self.query.init(self.nav_mesh, 2048)):
+            raise Exception(f"Unable to init query {self.map_id}")
 
-    status, out = query.findNearestPoly(startPos, polyPickExt, filter)
-    if dt.dtStatusFailed(status):
-        return -2, status
-    startRef = out["nearestRef"]
-    _startPt = out["nearestPt"]
+    def _find_point(self, point):
+        gx = int(32 - point.x() / SIZE_OF_GRIDS)
+        gy = int(32 - point.y() / SIZE_OF_GRIDS)
 
-    status, out = query.findNearestPoly(endPos, polyPickExt, filter)
-    if dt.dtStatusFailed(status):
-        return -3, status
-    endRef = out["nearestRef"]
-    _endPt = out["nearestPt"]
+        if (gx, gy) not in self.loaded_tiles:
+            if not self.maps.load(1, gx, gy):
+                raise Exception(f"Failed to load tile {gx}:{gy} using {point}")
+            self.loaded_tiles.append((gx, gy))
 
-    print("Get Path Reference List")
-    status, out = query.findPath(startRef, endRef, startPos, endPos, filter, 32)
-    if dt.dtStatusFailed(status):
-        return -4, status
-    pathRefs = out["path"]
+        self._create_mesh()
 
-    status, fixEndPos = query.closestPointOnPoly(pathRefs[-1], endPos)
-    if dt.dtStatusFailed(status):
-        return -5, status
+        pos = dt.dtVec3(point.y(), point.z(), point.x())
+        status, out = self.query.findNearestPoly(pos, self.poly_pick_ext, self.filter)
+        if dt.dtStatusFailed(status):
+            raise Exception(f"Failed to find point {point} on mesh")
+        return pos, out["nearestRef"]
 
-    print("Get Path Point List")
-    status, out = query.findStraightPath(startPos, fixEndPos, pathRefs, 32, 0)
-    if dt.dtStatusFailed(status):
-        return -6, status
-    straightPath = out["straightPath"]
-    straightPathFlags = out["straightPathFlags"]
-    straightPathRefs = out["straightPathRefs"]
+    def _ref_to_point(self, ref):
+        coords = dt.dtVec3()
+        status, pos = self.query.closestPointOnPoly(ref, coords)
+        if dt.dtStatusFailed(status):
+            raise Exception(f"Unable to locate poly ref {ref}")
+        return Position(pos.z, pos.x, pos.y)
 
-    print("Print Search Result")
-    print("The input data:")
-    print("\tstart pos: %s" % startPos)
-    print("\tend pos: %s" % endPos)
+    def build(self, from_point, to_point):
+        pos_from, from_ref = self._find_point(from_point)
+        pos_to, to_ref = self._find_point(to_point)
 
-    print("The fixed input data:")
-    print("\tstart point(in poly): %s" % _startPt)
-    print("\tend pos(in poly): %s" % _endPt)
-    print("\tend pos(fixed): %s" % fixEndPos)
+        status, out = self.query.findPath(from_ref, to_ref, pos_from, pos_to, self.filter, 256)
+        if dt.dtStatusFailed(status):
+            raise Exception(f"Unable to build path from {from_ref} to {to_ref}")
 
-    print("The final output path:")
-    print("\tstraight path: %s" % straightPath)
-    print("\tstraight path flags: %s" % straightPathFlags)
-    print("\tstraight path refs: %s" % straightPathRefs)
-    return 0, 0
+        result = list()
+        for point in [self._ref_to_point(x) for x in out["path"]]:
+            if len(result) and result[-1] == point:
+                continue
+            result.append(point)
 
-
-def main():
-    rv, st = test_sample_tile_mesh()
-    print("rv=%d, st=%d" % (rv, st))
+        return result
 
 
 if __name__ == '__main__':
-    main()
+    builder = PathBuilder(1)
+    res = builder.build(Position(1555.043212890625, -4421.5478515625, 8.577301979064941),
+                        Position(1670.45361328125, -4413.26025390625, 18.072647094726562))
+    print(res)

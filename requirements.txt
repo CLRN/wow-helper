@@ -5,3 +5,4 @@ pypiwin32
 pywin32
 python-telegram-bot
 scipy
+pillow

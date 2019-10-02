@@ -30,19 +30,14 @@ class Moving(StateMachine):
         self.last_target_stuck = None
         self.jump_interval = random.randint(5, 10)
 
-    def process(self, position, target, required_range, path):
-        if len(path) and Relativity.distance(position, Position(path[0][0], path[0][1])) < Settings.WAYPOINTS_MIN_DISTANCE:
-            logging.info(f"Reached way point {path[0]}, remaining: {len(path) - 1}")
-            path.pop(0)
-
-        target = Position(path[0][0], path[0][1]) if len(path) else target
-
+    def process(self, position, target, required_range):
         distance = Relativity.distance(position, target)
         diff = required_range - distance if self.is_kiting else distance - required_range
         target_pos = Position(target.x(), target.y())
 
         if self.is_staying and diff > 0:
             self.move()
+            logging.info(f"Moving to {target}, distance: {distance}")
         elif self.is_moving:
             if diff < 0:
                 self.stop()
@@ -71,8 +66,6 @@ class Moving(StateMachine):
                     logging.warning(f"We got stuck, jump didn't help. Last positions: {self.last_positions}")
                     self.last_target_stuck = target_pos
                     self.stuck()
-                    while len(path):
-                        path.pop(0)
             elif time.time() - self.last_jump > self.jump_interval:
                 self.controller.press('space')
                 self.last_jump = time.time()

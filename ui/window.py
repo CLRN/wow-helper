@@ -18,3 +18,6 @@ class Window:
 
     def client_to_screen(self, x, y):
         return win32gui.ClientToScreen(self.handle, (x, y))
+
+    def screen_to_client(self, x, y):
+        return win32gui.ScreenToClient(self.handle, (x, y))

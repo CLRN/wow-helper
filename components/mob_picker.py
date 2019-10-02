@@ -1,7 +1,9 @@
 from constants.enums import ObjectType
 from algos.relativity import Relativity
+from algos.path import PathBuilder
 from components.settings import Settings
 from scipy.spatial.kdtree import KDTree
+
 
 import math
 
@@ -9,11 +11,12 @@ import logging
 
 
 class MobPicker:
-    def __init__(self, manager, locator, starting_point):
+    def __init__(self, manager, locator, starting_point, map_id=1):
         self.manager = manager
         self.locator = locator
         self.starting_point = starting_point
         self.level = self.manager.player().level()
+        self.path_builder = PathBuilder(map_id=map_id)
 
         self.alive_mobs = list()
         self.alive_mobs_tree = None
@@ -66,8 +69,7 @@ class MobPicker:
     def _calc_route(self, target, known_path_only):
         player = self.manager.player()
         if known_path_only:
-            logging.info(f"Building known route")
-            return target, self.locator.known_route(player.x(), player.y(), target.x(), target.y())
+            return target, self.path_builder.build(player, target)
         else:
             return target, Relativity.direct_route(player, target)
 
@@ -106,7 +108,7 @@ class MobPicker:
         target = self.manager.target()
         return self._calc_route(target, known_path_only) if target else (None, [])
 
-    def fighting(self):
+    def fighting_mobs(self):
         player_id = self.manager.player().id()
 
         # filter out units keeping mobs only
