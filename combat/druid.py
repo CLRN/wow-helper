@@ -25,11 +25,11 @@ class Model:
         player = self.object_manager.player()
         if CAT_FORM in auras:
             return self.cat  # remove cat form
-        elif REGROWTH not in auras and (player.hp() * 100) / player.max_hp() < 70:
+        elif REGROWTH not in auras and player.hp_percent() < 70:
             return Spell(REGROWTH, 0, 100, 2, self.player_settings.regrowth(), 0)
         elif REJUVENATION not in auras:
             return self.rejuvenation
-        elif (player.hp() * 100) / player.max_hp() < 70:
+        elif player.hp_percent() < 70:
             return Spell(0, 0, 100, 3, self.player_settings.healing_touch(), 0)
 
     def get_next_attacking_spell(self, mobs, target):
@@ -41,7 +41,7 @@ class Model:
         threshold = Settings.HEAL_IN_COMBAT_THRESHOLD + len(mobs) * 10
 
         # check case when we need to heal in combat
-        if (player.hp() * 100) / player.max_hp() < threshold and (player.power() * 100) / player.max_power() > 40:
+        if player.hp_percent() < threshold and player.power_percent() > 40:
             spell = self._heal(auras)
             if spell:
                 return spell
@@ -77,8 +77,8 @@ class Model:
 
     def get_need_to_flee(self, mobs):
         player = self.object_manager.player()
-        hp = (player.hp() * 100) / player.max_hp() < Settings.FLEE_HP_THRESHOLD
-        power = (player.power() * 100) / player.max_power() < Settings.FLEE_POWER_THRESHOLD
+        hp = player.hp_percent() < Settings.FLEE_HP_THRESHOLD
+        power = player.power_percent() < Settings.FLEE_POWER_THRESHOLD
         return len(mobs) > 2 or (hp and power)
 
     def get_next_fleeing_spell(self):

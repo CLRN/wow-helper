@@ -63,15 +63,15 @@ class Moving(StateMachine):
                     self.last_jump = now
                     self.controller.press('space')
                 else:
-                    logging.warning(f"We got stuck, jump didn't help. Last positions: {self.last_positions}")
+                    logging.warning(f"We've got stuck, jump didn't help. Last positions: {self.last_positions}")
                     self.last_target_stuck = target_pos
                     self.stuck()
             elif time.time() - self.last_jump > self.jump_interval:
                 self.controller.press('space')
                 self.last_jump = time.time()
                 self.jump_interval = random.randint(5, 10)
-        elif self.is_sticking and self.last_target_stuck != target_pos:
-            logging.info(f"Unstuck with new target: {target}")
+        elif self.is_sticking and not target.id():  # id not set means that this is a generated WP based on mmaps
+            logging.info(f"Unstuck with new next target: {target}")
             self.move()
 
     def on_enter_moving(self):

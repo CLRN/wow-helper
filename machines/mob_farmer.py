@@ -1,6 +1,7 @@
 from statemachine import StateMachine, State
 from algos.relativity import Relativity
 from components.settings import Settings
+from components.path_tracker import PathTracker
 from machines.rotation import Rotation
 from machines.looting import MobLooting
 from machines.mob_search import MobSearch
@@ -58,11 +59,9 @@ class MobFarmer(StateMachine):
         self.attack_start_hp = 0
         self.last_incoming_dps_time = 0
 
-        self.loot_target = None
-        self.loot_target_path = list()
-
-        self.attack_target = None
-        self.attack_target_path = list()
+        self.loot_target_tracker = PathTracker(None, [], Settings.LOOTING_RANGE)
+        self.attack_target_tracker = PathTracker(None, [], Settings.SEARCH_RANGE)
+        self.fight_target_tracker = PathTracker(None, [], Settings.SEARCH_RANGE)
 
         self.last_target_path = list()
 
@@ -73,18 +72,18 @@ class MobFarmer(StateMachine):
         os.makedirs('screens')
 
     def _update_paths(self):
-        self.loot_target, self.loot_target_path = self.mob_picker.pick_lootable(self.moving_machine.is_sticking)
-        self.attack_target, self.attack_target_path = self.mob_picker.pick_alive(self.moving_machine.is_sticking)
-
-        if self.attack_target:
-            logging.info(f"Attack target: {self.attack_target}, path: {self.attack_target_path}")
-            self._report()
+        self.attack_target_tracker.target, self.attack_target_tracker.path = \
+            self.mob_picker.pick_alive(self.moving_machine.is_sticking)
+        self.loot_target_tracker.target, self.loot_target_tracker.path = \
+            self.mob_picker.pick_lootable(self.moving_machine.is_sticking)
 
     def _attack_or_loot(self):
-        distance_to_loot = Relativity.distance(self.object_manager.player(), self.loot_target) if self.loot_target else 9999
+        distance_to_loot = Relativity.distance(self.object_manager.player(), self.loot_target_tracker.target) \
+            if self.loot_target_tracker.target else 9999
         closest = self.mob_picker.pick_closest()
 
-        if not self.loot_target or closest and Relativity.distance(self.object_manager.player(), closest) < distance_to_loot:
+        if not self.loot_target_tracker.target or closest and \
+                Relativity.distance(self.object_manager.player(), closest) < distance_to_loot:
             return True, False
         else:
             return False, True
@@ -105,20 +104,20 @@ class MobFarmer(StateMachine):
         screen.save(name)
 
         player = self.object_manager.player()
+        target = self.attack_target_tracker.target
 
-        if self.attack_target:
+        if target:
             coords = list()
 
             im = Image.open(name)
             d = ImageDraw.Draw(im)
 
-            for point in [player] + self.attack_target_path + [self.attack_target]:
+            for point in [player] + self.attack_target_tracker.path + [target]:
                 on_screen = self._get_coords(point)
                 if on_screen:
                     x = on_screen[0] - rect.left_top[0]
                     y = on_screen[1] - rect.left_top[1]
                     coords.append((x, y))
-                # coords.append(self.window.client_to_screen(on_screen[0], on_screen[1]))
 
             line_color = (0, 0, 255)
             d.line(coords, fill=line_color, width=2)
@@ -134,30 +133,32 @@ class MobFarmer(StateMachine):
         return world_to_screen(self.object_manager.process, self.window, unit.x(), unit.y(), unit.z())
 
     def _do_searching(self):
-        to_attack, to_loot = self._attack_or_loot()
-        if to_loot:
-            self.loot()
-            return
-
-        if not self.attack_target:
-            self._update_paths()
-            return
-
-        if not self.last_attack_target or self.last_attack_target.id() != self.attack_target.id():
-            self.last_attack_target = self.attack_target
-            logging.info(f"Found new target to farm: {self.attack_target}")
-            self._report(force=True)
-
         buf_to_cast = self.combat_model.get_next_buff()
         if buf_to_cast:
             self.controller.press(buf_to_cast.bind_key)
             return
 
+        to_attack, to_loot = self._attack_or_loot()
+        if to_loot:
+            self.loot()
+            return
+
+        target, required_range = self.attack_target_tracker.next(self.object_manager.player())
+
+        if not target:
+            self._update_paths()
+            return
+
+        if not self.last_attack_target or self.last_attack_target.id() != target.id():
+            self.last_attack_target = target
+            logging.info(f"Switching attack target from {self.last_attack_target} to: {target}")
+            self._report(force=True)
+
         if self.searching_machine.process(player=self.object_manager.player(),
-                                          found_mob=self.attack_target,
+                                          found_mob=target,
                                           target=self.object_manager.target(),
-                                          target_coords=self._get_coords(self.attack_target),
-                                          path=self.attack_target_path):
+                                          target_coords=self._get_coords(target),
+                                          required_range=required_range):
             self.found()
 
     def _do_fighting(self):
@@ -170,7 +171,8 @@ class MobFarmer(StateMachine):
                 target = self.fighting_mobs[0]
 
         if not len(self.last_target_path) and (self.object_manager.target() or self.moving_machine.is_sticking):
-            _, self.last_target_path = self.mob_picker.path_to_target(self.moving_machine.is_sticking)
+            self.fight_target_tracker.target, self.fight_target_tracker.path =\
+                self.mob_picker.path_to_target(self.moving_machine.is_sticking)
 
         player = self.object_manager.player()
         if player.hp() == player.max_hp():
@@ -190,20 +192,22 @@ class MobFarmer(StateMachine):
             self.flee()
             return
 
+        spell = self.combat_model.get_next_attacking_spell(self.fighting_mobs, target)
+        self.fight_target_tracker.required_range = spell.max_range
+        next_target, required_range = self.fight_target_tracker.next(player)
+
         self.fighting_machine.process(player=player,
-                                      target=target,
-                                      next_spell=self.combat_model.get_next_attacking_spell(self.fighting_mobs, target),
+                                      target=next_target,
+                                      next_spell=spell,
                                       is_casting=player.spell(),
-                                      path=self.last_target_path)
+                                      required_range=required_range)
 
     def _do_restoring(self):
         # TODO: move to a separate state machine
         player = self.object_manager.player()
-        if (player.hp() * 100) / player.max_hp() > Settings.REGEN_HP_THRESHOLD and \
-           (player.power() * 100) / player.max_power() > Settings.REGEN_POWER_THRESHOLD:
+        if player.hp_percent() > Settings.REGEN_HP_THRESHOLD and player.power_percent() > Settings.REGEN_POWER_THRESHOLD:
             self.restored()
-        elif (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD and \
-             (player.power() * 100) / player.max_power() > Settings.REGEN_POWER_THRESHOLD:
+        elif player.hp_percent() < Settings.REGEN_HP_THRESHOLD and player.power_percent() > Settings.REGEN_POWER_THRESHOLD:
             spell = self.combat_model.get_healing_spell()
             if spell and not player.spell():
                 # logging.info(f"Healing with {spell.bind_key}, player: {player}")
@@ -229,15 +233,19 @@ class MobFarmer(StateMachine):
             return  # already looting
 
         to_attack, _ = self._attack_or_loot()
-        is_loot_good = self.loot_target and (self.loot_target.loot() or self.loot_target.skin()) and self.object_manager.has_object(self.loot_target.id())
-        if to_attack or not is_loot_good or (player.hp() * 100) / player.max_hp() < Settings.REGEN_HP_THRESHOLD:
+        is_loot_good = self.loot_target_tracker.target and \
+                       (self.loot_target_tracker.target.loot() or self.loot_target_tracker.target.skin()) and \
+                       self.object_manager.has_object(self.loot_target_tracker.target.id())
+        if to_attack or not is_loot_good or player.hp_percent() < Settings.REGEN_HP_THRESHOLD:
             self.looted()
             return
 
+        target, required_range = self.loot_target_tracker.next(self.object_manager.player())
+
         self.looting_machine.process(player=player,
-                                     target=self.loot_target,
-                                     target_coords=self._get_coords(self.loot_target),
-                                     path=self.loot_target_path)
+                                     target=target,
+                                     target_coords=self._get_coords(target),
+                                     required_range=required_range)
 
     def _do_fleeing(self):
         if not len(self.fighting_mobs):

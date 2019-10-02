@@ -71,7 +71,7 @@ class MobPicker:
         if known_path_only:
             return target, self.path_builder.build(player, target)
         else:
-            return target, Relativity.direct_route(player, target)
+            return target, list()
 
     def pick_alive(self, known_path_only):
         if not self.alive_mobs_tree:

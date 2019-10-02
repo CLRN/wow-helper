@@ -34,6 +34,12 @@ class Unit(Object):
     def summoned(self):
         return self.process.ptr(self.descriptors + CGUnitData.SummonedBy * 4)
 
+    def hp_percent(self):
+        return (self.hp() * 100) / self.max_hp()
+
+    def power_percent(self):
+        return (self.power() * 100) / self.max_power()
+
     def auras(self):
         offset = self.offset + ObjectOffsets.FirstAuraOffset
 
