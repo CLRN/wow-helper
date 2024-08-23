@@ -6,10 +6,12 @@ Simple Bot to reply to Telegram messages.
 """
 
 import logging
+import os
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 logger = logging.getLogger(__name__)
+TOKEN = os.getenv("BOT_TOKEN")
 
 
 class Bot:
@@ -24,7 +26,7 @@ class Bot:
         # Create the Updater and pass it your bot's token.
         # Make sure to set use_context=True to use the new context based callbacks
         # Post version 12 this will no longer be necessary
-        self.updater = Updater("903430086:AAFZuKG0QMh1sxRclGkMgZIuC2y7wHlOwTM", use_context=True)
+        self.updater = Updater(TOKEN, use_context=True)
 
         # Get the dispatcher to register handlers
         self.dp = self.updater.dispatcher
